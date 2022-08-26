@@ -1,5 +1,6 @@
 {
   "openapi": "3.0.0",
+  "paths": {},
   "info": {
     "title": "Provides configuration for individual workloads.",
     "version": "v1beta1"

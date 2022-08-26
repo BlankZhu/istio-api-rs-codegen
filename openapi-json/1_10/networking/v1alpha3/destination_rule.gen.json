@@ -1,5 +1,6 @@
 {
   "openapi": "3.0.0",
+  "paths": {},
   "info": {
     "title": "Configuration affecting load balancing, outlier detection, etc.",
     "version": "v1alpha3"

@@ -1,5 +1,6 @@
 {
   "openapi": "3.0.0",
+  "paths": {},
   "info": {
     "title": "Request authentication configuration for workloads.",
     "version": "v1beta1"

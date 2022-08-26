@@ -1,5 +1,6 @@
 {
   "openapi": "3.0.0",
+  "paths": {},
   "info": {
     "title": "Configuration for access control on workloads.",
     "version": "v1beta1"

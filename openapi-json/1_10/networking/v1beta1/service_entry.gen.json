@@ -1,5 +1,6 @@
 {
   "openapi": "3.0.0",
+  "paths": {},
   "info": {
     "title": "Configuration affecting service registry.",
     "version": "v1beta1"
