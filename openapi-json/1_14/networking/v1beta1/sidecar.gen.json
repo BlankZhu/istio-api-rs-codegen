@@ -1,6 +1,6 @@
 {
-  "paths": {},
   "openapi": "3.0.0",
+  "paths": {},
   "info": {
     "title": "Configuration affecting network reachability of a sidecar.",
     "version": "v1beta1"

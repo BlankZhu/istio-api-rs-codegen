@@ -1,6 +1,6 @@
 {
-  "paths": {},
   "openapi": "3.0.0",
+  "paths": {},
   "info": {
     "title": "Describes a collection of workload instances.",
     "version": "v1alpha3"

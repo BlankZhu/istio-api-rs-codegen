@@ -1,6 +1,6 @@
 {
-  "paths": {},
   "openapi": "3.0.0",
+  "paths": {},
   "info": {
     "title": "Configuration affecting edge load balancer.",
     "version": "v1alpha3"
