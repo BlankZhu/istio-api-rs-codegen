@@ -1,4 +1,4 @@
-# istio-openapi-to-rs
+# istio-api-rs-codegen
 
 This repository provides a way to generate rust codes that meets the CRD traits in [kube-rs](https://github.com/kube-rs/kube-rs). 
 
@@ -6,30 +6,18 @@ This repository provides a way to generate rust codes that meets the CRD traits 
 
 To generate the codes, the following is required:
 
-* make, for makefile
-* python3, to run the main codes
-* openapi-generator-cli.jar (>= 6.0.0), to generate raw rust codes from OpenAPI JSONs
-* jre, to run jar
-
-NOTE: `openapi-generator-cli.jar` should be placed at: `./jar` 
+* TODO
+* TODO
+* TODO
 
 ## getting started
 
 Just run:
 
 ```shell
-mkdir generated
-make
-```
-
-And got the output codes in `./generated`.
-
-To clean the generated codes, use:
-
-```shell
-make clean
+# TODO
 ```
 
 ## how 
 
-If you're interested in how this works, check `./openapi-json/readme.md` & `./main.py` for more details.
+TODO
