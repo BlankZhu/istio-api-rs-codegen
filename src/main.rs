@@ -1,31 +1,67 @@
-use log::info;
+use clap::Parser;
+use log::{error, info};
 
 mod constant;
+mod error;
 mod fetcher;
-mod resolver;
 mod generator;
 mod option;
+mod resolver;
+mod r#type;
+mod utility;
 
 #[tokio::main]
-async fn main() -> Result<(), reqwest::Error> {
+async fn main() -> r#type::Result<()> {
+    let opt = option::Option::parse();
+
     env_logger::init();
-    
     info!("istio-api-rs-codegen now running!");
 
-    let mut fetcher = fetcher::Fetcher::new();
-    fetcher.initialize();
-
-    let mut fetch_promises = Vec::new();
-    constant::ISTIO_VERSIONS.iter().for_each(|version| {
-        fetch_promises.push(fetcher.fetch(version));
-    });
-    for promise in fetch_promises {
-        let resp = promise.await;
-        if let Some(yaml) = resp {
-            println!("{}", yaml);
-        }
+    if opt.fetch {
+        info!("fetching CRDs...");
+        fetch().await;
+        info!("fetch finished");
     }
 
+    if opt.resolve {
+        info!("resolving CRDs...");
+        resolve();
+        info!("resolve finished");
+    }
 
+    if opt.generate {
+        info!("generating rust code...");
+        generate();
+        info!("generate finished");
+    }
+
+    info!("istio-api-rs-codegen finished");
     Ok(())
 }
+
+async fn fetch() {
+    let fetcher = fetcher::Fetcher::new();
+
+    let mut fetch_promises = Vec::new();
+    for version in constant::ISTIO_VERSIONS {
+        fetch_promises.push(fetcher.fetch(version));
+    }
+
+    for promise in fetch_promises {
+        let resp = promise.await;
+        if let Err(e) = resp {
+            error!("failed to fetch crd.yaml: {}", e);
+        }
+    }
+}
+
+fn resolve() {
+    let resolver = resolver::Resolver::new();
+    for version in constant::ISTIO_VERSIONS {
+        if let Err(e) = resolver.resolve(version) {
+            error!("failed to resolve temp files for {}: {}", version, e);
+        }
+    }
+}
+
+fn generate() {}
