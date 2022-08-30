@@ -64,4 +64,9 @@ fn resolve() {
     }
 }
 
-fn generate() {}
+fn generate() {
+    let generator = generator::Generator::new();
+    if let Err(e) = generator.generate(constant::ISTIO_CRD_TEMP_DIRECTORY) {
+        error!("failed to generate final rust code: {}", e);
+    }
+}
