@@ -5,3 +5,5 @@ pub static ISTIO_CRD_ALL_URL_SUFFIX: &'static str = "/manifests/charts/base/crds
 pub static ISTIO_CRD_TEMP_DIRECTORY: &'static str = "resources/istio";
 pub static ISTIO_CRD_FILENAME: &'static str = "crd-all.gen.yaml";
 pub static ISTIO_CRD_RUST_CODE_OUTPUT_DIRECTORY: &'static str = "output";
+// pub static KOPIUM_COMMAND: &'static str = "~/.cargo/bin/kopium";
+pub static KOPIUM_COMMAND: &'static str = "kopium";

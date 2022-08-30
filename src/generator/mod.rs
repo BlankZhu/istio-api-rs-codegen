@@ -1,8 +1,11 @@
+use crate::constant;
 use crate::r#type;
+use crate::utility;
 use log::{debug, error, info};
 use std::ffi::OsStr;
 use std::fs;
 use std::path;
+use std::process;
 
 #[derive(Debug)]
 pub struct Generator {}
@@ -183,6 +186,40 @@ impl Generator {
             api_ver.to_str().unwrap(),
             kind.to_str().unwrap()
         );
+
+        let rs_dir_path = path::Path::new(constant::ISTIO_CRD_RUST_CODE_OUTPUT_DIRECTORY)
+            .join(istio_ver)
+            .join(api_group)
+            .join(api_ver);
+        if !rs_dir_path.exists() {
+            fs::create_dir_all(&rs_dir_path)?;
+        }
+        if kind.to_str().is_none() {
+            error!("failed to get raw string from kind OsStr: {:?}", kind);
+            return Ok(());
+        }
+        let rs_filename = utility::CamelToSnake(kind.to_str().unwrap());
+        let rs_file_path = rs_dir_path.join(rs_filename).with_extension("rs");
+
+        let yaml_dir_path = path::Path::new(constant::ISTIO_CRD_TEMP_DIRECTORY)
+            .join(istio_ver)
+            .join(api_group)
+            .join(api_ver);
+        let yaml_filename = path::Path::new(kind).with_extension("yaml");
+        let yaml_file_path = yaml_dir_path.join(yaml_filename);
+
+        info!(
+            "calling kopium to generate rust code from `{}` to `{}`",
+            yaml_file_path.display(),
+            rs_file_path.display()
+        );
+
+        let output = process::Command::new(constant::KOPIUM_COMMAND)
+            .args(["-Af", yaml_file_path.to_str().unwrap()])
+            .output()?;
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        fs::write(rs_file_path, stdout.as_ref())?;
+
         Ok(())
     }
 }

@@ -380,6 +380,7 @@ dependencies = [
  "clap",
  "env_logger",
  "log",
+ "regex",
  "reqwest",
  "tokio",
  "yaml-rust",
