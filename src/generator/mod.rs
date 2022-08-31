@@ -207,12 +207,13 @@ impl Generator {
                                 if let Err(e) =
                                     self.call_kopium(istio_ver, api_group, api_ver, stem)
                                 {
-                                    error!("failed to call kopium: {}", e);
+                                    error!("failed to do kopium process: {}", e);
                                     continue;
                                 }
 
                                 if let Ok(mod_name_string) = stem.to_os_string().into_string() {
-                                    mod_names.push(mod_name_string);
+                                    mod_names
+                                        .push(utility::camel_to_snake(mod_name_string.as_str()));
                                 } else {
                                     warn!("cannot convert {:?} to String", stem);
                                 }
@@ -263,7 +264,11 @@ impl Generator {
         kind: &OsStr,
     ) -> r#type::Result<path::PathBuf> {
         let base_dir = path::Path::new(constant::ISTIO_CRD_RUST_CODE_OUTPUT_DIRECTORY);
-        self.make_final_path(base_dir, istio_ver, api_group, api_ver, kind, "rs")
+
+        let snake_kind = utility::camel_to_snake(kind.to_str().unwrap());
+        let snake_kind = path::Path::new(&snake_kind).as_os_str();
+
+        self.make_final_path(base_dir, istio_ver, api_group, api_ver, snake_kind, "rs")
     }
 
     fn make_final_path(
@@ -286,7 +291,7 @@ impl Generator {
             let err_msg = format!("failed to get raw string from kind OsStr: {:?}", kind);
             return Err(Box::new(error::KindError::new(err_msg.as_str())));
         }
-        let final_filename = utility::camel_to_snake(kind.to_str().unwrap());
+        let final_filename = kind.to_str().unwrap();
         let final_file_path = file_dir_path.join(final_filename).with_extension(extension);
         Ok(final_file_path)
     }
@@ -315,12 +320,17 @@ impl Generator {
             rs_file_path.display()
         );
 
-        let output = process::Command::new(constant::KOPIUM_COMMAND)
-            .args(["-Af", yaml_file_path.to_str().unwrap()])
-            .output()?;
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        fs::write(rs_file_path, stdout.as_ref())?;
-
+        let mut kopium_cmd = process::Command::new(constant::KOPIUM_COMMAND);
+        kopium_cmd.args([
+            "-Af",
+            yaml_file_path.to_str().unwrap(),
+            "--api-version",
+            api_ver.to_str().unwrap(),
+        ]);
+        debug!("call kopium using command: {:?}", kopium_cmd);
+        let output = kopium_cmd.output().unwrap();
+        let stdout = String::from_utf8(output.stdout)?;
+        fs::write(rs_file_path, stdout)?;
         Ok(())
     }
 
@@ -345,7 +355,7 @@ impl Generator {
             let ver_without_patch = utility::extract_major_minor_version(name.as_str());
             let mod_line = format!(
                 "#[cfg(feature = \"{}\")] mod {};\n",
-                ver_without_patch, ver_without_patch
+                ver_without_patch, name
             );
             let use_line = format!(
                 "#[cfg(feature = \"{}\")] pub use self::{}::*;\n\n",
