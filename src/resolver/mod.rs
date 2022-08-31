@@ -1,8 +1,10 @@
 use crate::{constant, r#type, utility};
+use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
+use log::warn;
 use log::{debug, error};
+use serde::Deserialize;
 use std::fs;
 use std::path;
-use yaml_rust::{self, Yaml, YamlEmitter};
 
 #[derive(Debug)]
 pub struct Resolver {}
@@ -18,47 +20,22 @@ impl Resolver {
             tmp_dir.join(utility::istio_version_to_directory_name(istio_version));
         let crd_yaml_path = versioned_tmp_dir.join(constant::ISTIO_CRD_FILENAME);
 
-        let yamls = match self.split_yamls(crd_yaml_path.as_path()) {
-            Ok(ys) => ys,
+        let crds = match self.split_yamls(crd_yaml_path.as_path()) {
+            Ok(crds) => crds,
             Err(e) => {
                 error!("failed to split yamls: {}", e);
                 return Err(e);
             }
         };
 
-        for yaml in yamls {
-            let kind = match self.extract_kind(&yaml) {
-                Some(k) => k,
-                None => {
-                    error!(
-                        "failed to extract kind from yaml: {}",
-                        crd_yaml_path.display()
-                    );
-                    continue;
-                }
-            };
+        for mut crd in crds {
+            // prune spec.versions[].subresources if spec.versions[].subresources.status has no keys
+            // 'cause kopium will genereate CRD Spec without Status field
+            self.prune_empty_status(&mut crd);
 
-            let api_versions = match self.extract_api_version(&yaml) {
-                Some(av) => av,
-                None => {
-                    error!(
-                        "failed to extract api version from yaml: {}",
-                        crd_yaml_path.display()
-                    );
-                    continue;
-                }
-            };
-
-            let istio_api_group = match self.extract_istio_api_group(&yaml) {
-                Some(ag) => ag,
-                None => {
-                    error!(
-                        "failed to extract api version from yaml: {}",
-                        crd_yaml_path.display()
-                    );
-                    continue;
-                }
-            };
+            let kind = self.extract_kind(&crd);
+            let api_versions = self.extract_api_version(&crd);
+            let istio_api_group = self.extract_istio_api_group(&crd);
 
             for api_version in api_versions {
                 debug!(
@@ -66,7 +43,7 @@ impl Resolver {
                     istio_version, istio_api_group, api_version, kind
                 );
                 if let Err(e) = self.save_to_resolved_path(
-                    &yaml,
+                    &crd,
                     istio_version,
                     istio_api_group.as_str(),
                     api_version.as_str(),
@@ -84,7 +61,10 @@ impl Resolver {
         Ok(())
     }
 
-    fn split_yamls(&self, yaml_file_path: &path::Path) -> r#type::Result<Vec<Yaml>> {
+    fn split_yamls(
+        &self,
+        yaml_file_path: &path::Path,
+    ) -> r#type::Result<Vec<CustomResourceDefinition>> {
         let content = match fs::read_to_string(yaml_file_path) {
             Ok(c) => c,
             Err(e) => {
@@ -92,54 +72,46 @@ impl Resolver {
             }
         };
 
-        match yaml_rust::YamlLoader::load_from_str(&content.as_str()) {
-            Ok(v) => return Ok(v),
-            Err(e) => return Err(Box::new(e)),
-        };
-    }
-
-    fn extract_api_version(&self, doc: &Yaml) -> Option<Vec<String>> {
+        let docs = serde_yaml::Deserializer::from_str(content.as_str());
         let mut ret = Vec::new();
-        let versions = &doc["spec"]["versions"];
-        if !versions.is_badvalue() {
-            let vs = versions.clone();
-            vs.into_iter().for_each(|obj| {
-                let version_name = &obj["name"];
-                if let Some(version_name) = version_name.as_str() {
-                    ret.push(version_name.to_string())
+
+        for doc in docs {
+            match serde_yaml::Value::deserialize(doc) {
+                Ok(raw_value) => {
+                    match serde_yaml::from_value::<CustomResourceDefinition>(raw_value) {
+                        Ok(crd) => ret.push(crd),
+                        Err(e) => warn!("failed to convert yaml doc to CRD: {}", e),
+                    }
                 }
-            })
-        }
-        return Some(ret);
-    }
-
-    fn extract_istio_api_group(&self, doc: &Yaml) -> Option<String> {
-        let spec_group = &doc["spec"]["group"];
-        if !spec_group.is_badvalue() {
-            if let Some(group) = spec_group.as_str() {
-                let ret = match group.strip_suffix(".istio.io") {
-                    Some(g) => g.to_string(),
-                    None => group.to_string(),
-                };
-                return Some(ret);
+                Err(e) => warn!("failed to deserialize yaml doc: {}", e),
             }
         }
-        return None;
+
+        Ok(ret)
     }
 
-    fn extract_kind(&self, doc: &Yaml) -> Option<String> {
-        let kind = &doc["spec"]["names"]["kind"];
-        if !kind.is_badvalue() {
-            if let Some(k) = kind.clone().into_string() {
-                return Some(k);
-            }
+    fn extract_api_version(&self, crd: &CustomResourceDefinition) -> Vec<String> {
+        let mut ret = Vec::new();
+        for version in &crd.spec.versions {
+            ret.push(version.name.clone());
         }
-        return None;
+        ret
+    }
+
+    fn extract_istio_api_group(&self, crd: &CustomResourceDefinition) -> String {
+        match crd.spec.group.strip_suffix(".istio.io") {
+            Some(group) => group.to_string(),
+            None => crd.spec.group.clone(),
+        }
+    }
+
+    fn extract_kind(&self, crd: &CustomResourceDefinition) -> String {
+        crd.spec.names.kind.clone()
     }
 
     fn save_to_resolved_path(
         &self,
-        yaml: &Yaml,
+        crd: &CustomResourceDefinition,
         istio_version: &str,
         istio_api_group: &str,
         api_version: &str,
@@ -159,15 +131,25 @@ impl Resolver {
             }
         }
 
-        let mut output_str = String::new();
-        let mut emitter = YamlEmitter::new(&mut output_str);
-        if let Err(e) = emitter.dump(yaml) {
-            return Err(Box::new(e));
-        }
+        let output_str = serde_yaml::to_string(crd)?;
         if let Err(e) = fs::write(kind_path, output_str) {
             return Err(Box::new(e));
         };
 
         Ok(())
+    }
+
+    fn prune_empty_status(&self, crd: &mut CustomResourceDefinition) {
+        crd.spec.versions.iter_mut().for_each(|version| {
+            if let Some(subresources) = &version.subresources {
+                if let Some(status) = &subresources.status {
+                    if let Some(obj) = status.0.as_object() {
+                        if obj.len() == 0 && subresources.scale.is_none() {
+                            version.subresources = None;
+                        }
+                    }
+                }
+            }
+        })
     }
 }
