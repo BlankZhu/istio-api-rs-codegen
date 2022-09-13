@@ -6,7 +6,27 @@ We got the original OpenAPI scheme JSON files from [istio/api](https://github.co
 
 Then pick the OpenAPI JSON files according to the `apis/` in [istio/client-go](https://pkg.go.dev/istio.io/client-go/pkg/apis) (also, use the right version of Istio).
 
-Currently the OpenAPI schemas here are all hand-picked. Take Istio v1.15 as example, here is the target list:
+We need to modify `cue.yaml` of istio/api like below:
+
+```yaml
+directories:
+  # ...
+  telemetry/v1alpha1:
+    - mode: perFile
+  operator/v1alpha1:
+    - mode: perFile
+```
+
+Then rename `api/extensions/v1alpha1/wasm.proto` to `api/extensions/v1alpha1/wasm_plugin.proto`
+
+After the modification, we need to generate our own OpenAPI JSON:
+
+```shell
+# you may need to install cue-gen from `istio/tools`
+cue-gen -paths=common-protos -f=./cue.yaml
+```
+
+Take Istio v1.15 as example, here is the target list:
 
 ```
 .
@@ -42,12 +62,13 @@ Currently the OpenAPI schemas here are all hand-picked. Take Istio v1.15 as exam
 │       └── request_authentication.gen.json
 ├── telemetry
 │   └── v1alpha1
+│       └── telemetry.gen.json
 └── type
     └── v1beta1
         └── workload_selector.gen.json
 ```
 
-Specially for `wasm.gen.json`, it is rename to `wasm_plugin.gen.json`.
+Specially for `wasm.gen.json`, it is renamed to `wasm_plugin.gen.json`.
 
 ## add "paths" field for OpenAPI JSON files
 
