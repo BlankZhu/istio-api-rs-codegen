@@ -1,23 +1,17 @@
 # istio-api-rs-codegen
 
-This repository provides a way to generate rust codes that meets the CRD traits in [kube-rs](https://github.com/kube-rs/kube-rs). 
+istio-api-rs-codegen using Kopium.
 
-## prerequisite
+pros:
+1. Kopium use Istio CRD directly, skipping OpenAPI JSONs.
+2. Pure rust codegen.
 
-To generate the codes, the following is required:
+cons:
+1. Currently, kopium will generated duplicate Rust code fields (bug, though using 'rename').
+2. Kopium will miss some structs, most of them are duplicate or error generated.
 
-* TODO
-* TODO
-* TODO
+In short, Kopium shows a good vision of kube-rs compatible codegen. However, Kopium is not stable yet, which means it not ready for kube-rs compatible Istio CRD codegen.
 
-## getting started
+The codegen in this branch is workable itself, but the generated codes are not. 
 
-Just run:
-
-```shell
-# TODO
-```
-
-## how 
-
-TODO
+It will be great if Kopium provide a full-functional version in the future. Try Kopium later.

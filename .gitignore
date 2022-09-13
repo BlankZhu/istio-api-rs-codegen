@@ -1,4 +1,8 @@
 .vscode/
 resources/
 output/
-/target
+target/
+__pycache__/
+jar/
+openapi-json/
+generated/
