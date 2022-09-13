@@ -3,6 +3,7 @@ __pycache__/
 generated/
 jar/
 api/
+target/
 
 openapi-json/1_10/*
 openapi-json/1_11/*
