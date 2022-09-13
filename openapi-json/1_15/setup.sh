@@ -18,7 +18,7 @@ else
     mkdir -p type/v1beta1
 
     echo "fetching extensions/v1alpha1 ..."
-    cp ${ISTIO_API_PATH}/extensions/v1alpha1/wasm_plugin.gen.json extensions/v1alpha1/wasm_plugin.gen.json 
+    cp ${ISTIO_API_PATH}/extensions/v1alpha1/wasm.gen.json extensions/v1alpha1/wasm_plugin.gen.json 
 
     echo "fetching networking/v1alpha3 ..."
     cp ${ISTIO_API_PATH}/networking/v1alpha3/destination_rule.gen.json networking/v1alpha3/destination_rule.gen.json
