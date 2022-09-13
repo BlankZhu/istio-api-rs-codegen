@@ -2,10 +2,10 @@ if [[ -z "${ISTIO_API_PATH}" ]]; then
     echo "ENV ISTIO_API_PATH not set"
 else 
     CURR_DIR=${PWD}
-
+    
     echo "using Istio API path: ${ISTIO_API_PATH}"
     cd ${ISTIO_API_PATH}
-    git checkout tags/1.15.0
+    git checkout tags/1.13.0
     cd ${CURR_DIR}
 
     echo "making up API folders..."
@@ -19,7 +19,7 @@ else
 
     echo "fetching extensions/v1alpha1 ..."
     cp ${ISTIO_API_PATH}/extensions/v1alpha1/wasm_plugin.gen.json extensions/v1alpha1/wasm_plugin.gen.json 
-
+    
     echo "fetching networking/v1alpha3 ..."
     cp ${ISTIO_API_PATH}/networking/v1alpha3/destination_rule.gen.json networking/v1alpha3/destination_rule.gen.json
     cp ${ISTIO_API_PATH}/networking/v1alpha3/envoy_filter.gen.json networking/v1alpha3/envoy_filter.gen.json

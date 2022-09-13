@@ -2,23 +2,19 @@ if [[ -z "${ISTIO_API_PATH}" ]]; then
     echo "ENV ISTIO_API_PATH not set"
 else 
     CURR_DIR=${PWD}
-
+    
     echo "using Istio API path: ${ISTIO_API_PATH}"
     cd ${ISTIO_API_PATH}
-    git checkout tags/1.15.0
+    git checkout tags/1.11.0
     cd ${CURR_DIR}
 
     echo "making up API folders..."
-    mkdir -p extensions/v1alpha1
     mkdir -p networking/v1alpha3
     mkdir -p networking/v1beta1
     mkdir -p operator/v1alpha1
     mkdir -p security/v1beta1
     mkdir -p telemetry/v1alpha1
     mkdir -p type/v1beta1
-
-    echo "fetching extensions/v1alpha1 ..."
-    cp ${ISTIO_API_PATH}/extensions/v1alpha1/wasm_plugin.gen.json extensions/v1alpha1/wasm_plugin.gen.json 
 
     echo "fetching networking/v1alpha3 ..."
     cp ${ISTIO_API_PATH}/networking/v1alpha3/destination_rule.gen.json networking/v1alpha3/destination_rule.gen.json
@@ -33,12 +29,10 @@ else
     echo "fetching networking/v1beta1 ..."
     cp ${ISTIO_API_PATH}/networking/v1beta1/destination_rule.gen.json networking/v1beta1/destination_rule.gen.json
     cp ${ISTIO_API_PATH}/networking/v1beta1/gateway.gen.json networking/v1beta1/gateway.gen.json
-    cp ${ISTIO_API_PATH}/networking/v1beta1/proxy_config.gen.json networking/v1beta1/proxy_config.gen.json
     cp ${ISTIO_API_PATH}/networking/v1beta1/service_entry.gen.json networking/v1beta1/service_entry.gen.json
     cp ${ISTIO_API_PATH}/networking/v1beta1/sidecar.gen.json networking/v1beta1/sidecar.gen.json
     cp ${ISTIO_API_PATH}/networking/v1beta1/virtual_service.gen.json networking/v1beta1/virtual_service.gen.json
     cp ${ISTIO_API_PATH}/networking/v1beta1/workload_entry.gen.json networking/v1beta1/workload_entry.gen.json
-    cp ${ISTIO_API_PATH}/networking/v1beta1/workload_group.gen.json networking/v1beta1/workload_group.gen.json
 
     echo "fetching operator/v1alpha1 ..."
     cp ${ISTIO_API_PATH}/operator/v1alpha1/operator.gen.json operator/v1alpha1/operator.gen.json
