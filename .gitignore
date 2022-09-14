@@ -2,6 +2,7 @@ __pycache__/
 .vscode/
 generated/
 jar/
+output/
 api/
 target/
 

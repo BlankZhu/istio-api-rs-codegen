@@ -8,6 +8,9 @@ edition = "2021"
 [dependencies]
 log = "0.4"
 env_logger = "0.9"
+anyhow = "1.0"
+thiserror = "1.0"
+exitcode = "1.1"
 clap = { version = "3.2", features = ["derive"] }
 serde = "1.0"
 serde_yaml = "0.8"
