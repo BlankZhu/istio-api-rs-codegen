@@ -11,7 +11,7 @@ pub struct Cutter {
 
 impl Cutter {
     pub fn new(cue_yaml_path: PathBuf) -> Self {
-        return Cutter { cue_yaml_path };
+        Cutter { cue_yaml_path }
     }
 
     pub fn modify_cue_file(&self) -> anyhow::Result<()> {

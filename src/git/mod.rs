@@ -11,7 +11,7 @@ pub struct Gitter {
 
 impl Gitter {
     pub fn new(repository: PathBuf) -> Self {
-        return Gitter { repository };
+        Gitter { repository }
     }
 
     pub fn checkout_tag(&self, tag: &str) -> anyhow::Result<()> {

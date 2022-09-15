@@ -1,15 +1,18 @@
-use k8s_openapi::http::header::TE;
+pub struct Tena {}
 
-pub struct Tear {
-
-}
-
-impl Tear {
+impl Tena {
     pub fn new() -> Self {
-        return Tear{}
+        return Tena {};
     }
 
     pub fn setup_rust_structure_tree(&self) {
         todo!()
     }
+}
+
+
+pub struct Tedd {}
+
+impl Tedd {
+    
 }
