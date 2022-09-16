@@ -7,14 +7,14 @@ use thiserror::Error;
 
 use crate::constant::{self, IstioApiVersionInfo};
 use crate::util::{dot_2_underscore, extract_major_and_minor};
-pub struct Geno {
+pub struct Cuge {
     istio_api_path: PathBuf,
     codegen_working_directory: PathBuf,
 }
 
-impl Geno {
+impl Cuge {
     pub fn new(codegen_working_directory: PathBuf, istio_api_path: PathBuf) -> Self {
-        Geno {
+        Cuge {
             istio_api_path,
             codegen_working_directory,
         }
