@@ -63,7 +63,7 @@ impl Opai {
             let mut infos = self.parse_api_groups(entry.path().as_path(), info)?;
             ret.append(&mut infos);
         }
-        ret.sort_by_key(|key| key.api_version.clone());
+        ret.sort_by(|l, r| l.istio_version.cmp(&r.istio_version));
         Ok(ret)
     }
 
@@ -93,7 +93,7 @@ impl Opai {
             let mut infos = self.parse_api_versions(entry.path().as_path(), info)?;
             ret.append(&mut infos);
         }
-        ret.sort_by_key(|key| key.api_group.clone());
+        ret.sort_by(|l, r| l.api_group.cmp(&r.api_group));
         Ok(ret)
     }
 
@@ -123,7 +123,7 @@ impl Opai {
             let mut infos = self.parse_resources(entry.path().as_path(), info)?;
             ret.append(&mut infos);
         }
-        ret.sort_by_key(|key| key.api_version.clone());
+        ret.sort_by(|l, r| l.api_version.cmp(&r.api_group));
         Ok(ret)
     }
 
@@ -162,7 +162,7 @@ impl Opai {
             };
             return Err(err);
         }
-        ret.sort_by_key(|key| key.resource.clone());
+        ret.sort_by(|l, r| l.resource.cmp(&r.resource));
         Ok(ret)
     }
 

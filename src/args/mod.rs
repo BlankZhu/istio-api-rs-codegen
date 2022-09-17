@@ -14,6 +14,12 @@ pub struct Args {
     /// Output directory path for generated rust codes.
     #[clap(short, long, value_parser)]
     pub output_dir_path: String,
+
+    #[clap(short, long, value_parser, default_value_t = false)]
+    pub setup_openapi_directory: bool,
+
+    #[clap(short, long, value_parser, default_value_t = false)]
+    pub generate_rust_codes: bool,
 }
 
 impl Args {

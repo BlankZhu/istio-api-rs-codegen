@@ -8,17 +8,12 @@ pub mod args;
 pub mod constant;
 pub mod cue;
 pub mod git;
-pub mod meta;
 pub mod openapi;
 pub mod tree;
 pub mod util;
 
 fn main() {
     env_logger::init();
-    let working_directory = match std::env::current_dir() {
-        Ok(dir) => dir,
-        Err(e) => panic!("failed to get current working directory: {}", e),
-    };
 
     let args = args::Args::parse();
     info!("using clap args: {:?}", args);
@@ -32,6 +27,25 @@ fn main() {
         std::process::exit(exitcode::DATAERR);
     }
 
+    if args.setup_openapi_directory {
+        setup_openapi_directory(&args);
+    }
+
+    if args.generate_rust_codes {
+        generate_rust_codes(&args);
+    }
+
+    info!("codegen done");
+}
+
+fn setup_openapi_directory(args: &args::Args) {
+    info!("setting up openapi directory ...");
+
+    let working_directory = match std::env::current_dir() {
+        Ok(dir) => dir,
+        Err(e) => panic!("failed to get current working directory: {}", e),
+    };
+
     let gitter = Gitter::new(std::path::Path::new(&args.istio_api_dir_path).to_path_buf());
     let cutter = Cutter::new(
         std::path::Path::new(&args.istio_api_dir_path).join(&constant::CUE_CONFIG_FILE_NAME),
@@ -40,8 +54,6 @@ fn main() {
         working_directory,
         std::path::Path::new(&args.istio_api_dir_path).to_path_buf(),
     );
-    let opai = Opai::new(std::path::Path::new(constant::OPENAPI_JSON_DIR).to_path_buf());
-
     for version_info in constant::ISTIO_API_VERSION_INFOS {
         info!("checking out tag {} ...", version_info.version);
         if let Err(e) = gitter.checkout_tag(version_info.version) {
@@ -86,18 +98,12 @@ fn main() {
             );
         }
 
-        info!("settting up openapi-json output directory ...");
+        info!("setting up openapi-json output directory ...");
         if let Err(e) = cuge.extract_openapi_to_codegen_dir(version_info) {
             error!(
                 "failed to extract OpenAPI JSONs to codegen directory, detail: {}",
                 e
             );
-            continue;
-        }
-
-        info!("generating rust code from OpenAPI JSONs ...");
-        if let Err(e) = opai.openapi_generate() {
-            error!("failed to generate rust code, detail: {}", e);
             continue;
         }
 
@@ -117,5 +123,17 @@ fn main() {
         }
     }
 
-    info!("codegen done");
+    info!("setup openapi directory completed");
+}
+
+fn generate_rust_codes(_args: &args::Args) {
+    info!("generating rust codes ...");
+
+    let opai = Opai::new(std::path::Path::new(constant::OPENAPI_JSON_DIR).to_path_buf());
+    info!("generating rust code from OpenAPI JSONs ...");
+    if let Err(e) = opai.openapi_generate() {
+        error!("failed to generate rust code, detail: {}", e);
+    }
+
+    info!("rust codes generated");
 }
