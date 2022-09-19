@@ -98,7 +98,7 @@ fn setup_openapi_directory(args: &args::Args) {
             );
         }
 
-        info!("setting up openapi-json output directory ...");
+        info!("setting up openapi-json middle directory ...");
         if let Err(e) = cuge.extract_openapi_to_codegen_dir(version_info) {
             error!(
                 "failed to extract OpenAPI JSONs to codegen directory, detail: {}",

@@ -76,41 +76,34 @@ impl Cuge {
         &self,
         istio_api_version_info: &IstioApiVersionInfo,
     ) -> anyhow::Result<()> {
-        for directory in istio_api_version_info.target_directories {
-            self.copy_gen_json(istio_api_version_info.version, directory)?;
+        for file in istio_api_version_info.target_openapi_file {
+            self.copy_gen_json(istio_api_version_info.version, &file)?;
         }
         Ok(())
     }
 
-    fn copy_gen_json(&self, istio_version: &str, target_directory: &str) -> anyhow::Result<()> {
-        // find '*.gen.json' in {istio_api_path}/{target_directory}
-        // then copy them to {codegen_working_directory}/{openapi_json_dir}/{istio_version}/{target_directory}
-        let target_dir_path = self.istio_api_path.join(target_directory);
-        if !target_dir_path.exists() {
-            panic!("Path `{}` not exists! You may be using incorrect istio/api version info! Check the codegen's codes!", target_dir_path.display())
+    fn copy_gen_json(&self, istio_version: &str, target_file: &str) -> anyhow::Result<()> {
+        // then copy them to {codegen_working_directory}/{openapi_json_dir}/{istio_version}/{target_directory}/*.gen.json
+        let target_file_path = self.istio_api_path.join(target_file);
+        if !target_file_path.exists() {
+            panic!("Path `{}` not exists! You may be using incorrect istio/api version info! Check the codegen's codes!", target_file_path.display())
         }
         let istio_version_section =
             dot_2_underscore(extract_major_and_minor(istio_version).as_str());
-        let openapi_json_dir_path = self
+        let openapi_json_file_path = self
             .codegen_working_directory
             .join(constant::OPENAPI_JSON_DIR)
             .join(istio_version_section)
-            .join(target_directory);
-        if !openapi_json_dir_path.exists() {
-            fs::create_dir_all(&openapi_json_dir_path)?;
+            .join(target_file);
+
+        let mut openapi_json_dir = openapi_json_file_path.clone();
+        openapi_json_dir.pop();
+        if !openapi_json_dir.exists() {
+            fs::create_dir_all(openapi_json_dir.as_path())?;
         }
 
-        let read_dir = fs::read_dir(&target_dir_path)?;
-        for dir_entry in read_dir {
-            let dir_entry = dir_entry?;
-            let filename: String = dir_entry.file_name().to_string_lossy().into();
-            if filename.contains(".gen.json") {
-                let copy_to = openapi_json_dir_path.join(&filename);
-                debug!("copying from `{}` to `{}`", dir_entry.path().display(), copy_to.display());
-                fs::copy(dir_entry.path(), copy_to)?;
-            }
-        }
-
+        debug!("copying from `{}` to `{}`", target_file_path.display(), openapi_json_file_path.display());
+        fs::copy(target_file_path.as_path(), openapi_json_file_path.as_path())?;
         Ok(())
     }
 }
