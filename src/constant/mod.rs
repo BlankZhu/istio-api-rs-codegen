@@ -9,6 +9,7 @@ pub const SECTION_WITH_NO_CRD: &'static [&'static str] = &["type"];
 
 pub const GIT_COMMAND: &'static str = "git";
 pub const CUE_GEN_COMMAND: &'static str = "cue-gen";
+pub const JAVA_COMMAND: &'static str = "java";
 
 pub struct IstioApiVersionInfo {
     pub version: &'static str,

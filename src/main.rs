@@ -26,6 +26,10 @@ fn main() {
         error!("Error occurs while check output dir path: {}", e);
         std::process::exit(exitcode::DATAERR);
     }
+    if let Err(e) = args.check_openapi_generator_cli_jar() {
+        error!("Error occurs while check openapi-generator jar path: {}", e);
+        std::process::exit(exitcode::DATAERR);
+    }
 
     if args.setup_openapi_directory {
         setup_openapi_directory(&args);
@@ -126,10 +130,14 @@ fn setup_openapi_directory(args: &args::Args) {
     info!("setup openapi directory completed");
 }
 
-fn generate_rust_codes(_args: &args::Args) {
+fn generate_rust_codes(args: &args::Args) {
     info!("generating rust codes ...");
 
-    let opai = Opai::new(std::path::Path::new(constant::OPENAPI_JSON_DIR).to_path_buf());
+    let opai = Opai::new(
+        std::path::Path::new(constant::OPENAPI_JSON_DIR).to_path_buf(),
+        std::path::Path::new(&args.openapi_generator_cli_jar_path).to_path_buf(),        
+        std::path::Path::new(&args.output_dir_path).to_path_buf()
+    );
     info!("generating rust code from OpenAPI JSONs ...");
     if let Err(e) = opai.openapi_generate() {
         error!("failed to generate rust code, detail: {}", e);

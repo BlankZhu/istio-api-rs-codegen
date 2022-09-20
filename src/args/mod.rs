@@ -15,6 +15,9 @@ pub struct Args {
     #[clap(short, long, value_parser)]
     pub output_dir_path: String,
 
+    #[clap(short = 'j', long, value_parser)]
+    pub openapi_generator_cli_jar_path: String,
+
     #[clap(short, long, value_parser, default_value_t = false)]
     pub setup_openapi_directory: bool,
 
@@ -54,6 +57,15 @@ impl Args {
         }
         Ok(())
     }
+
+    pub fn check_openapi_generator_cli_jar(&self) -> anyhow::Result<()> {
+        let openapi_geneartor_cli_jar_path = Path::new(&self.openapi_generator_cli_jar_path);
+        if !openapi_geneartor_cli_jar_path.exists() {
+            let err = ArgsError::OpenApiGeneratorCliJarNotExists { openapi_generator_cli_jar_path: self.openapi_generator_cli_jar_path.clone() };
+            anyhow::bail!("{}", err);
+        }
+        Ok(())
+    }
 }
 
 #[derive(Error, Debug)]
@@ -64,4 +76,6 @@ pub enum ArgsError {
     IstioApiPathNotDir { istio_api_dir_path: String },
     #[error("given output path is not a dir: {output_dir_path:?}")]
     OutputPathNotDir { output_dir_path: String },
+    #[error("given openapi-generator-cli jar path is not exists: {openapi_generator_cli_jar_path:?}")]
+    OpenApiGeneratorCliJarNotExists { openapi_generator_cli_jar_path: String },
 }

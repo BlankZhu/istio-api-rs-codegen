@@ -3,6 +3,8 @@ use std::process::Command;
 use std::{env, fs};
 
 use log::debug;
+use serde::Deserialize;
+use serde_json::{json, Deserializer, Value};
 use thiserror::Error;
 
 use crate::constant::{self, IstioApiVersionInfo};
@@ -23,7 +25,7 @@ impl Cuge {
     pub fn cue_gen(&self) -> anyhow::Result<()> {
         let cue_config_file_path = Path::new(constant::CUE_CONFIG_FILE_NAME);
         if !cue_config_file_path.exists() || !cue_config_file_path.is_file() {
-            let err = GenoError::CueConfigNotExistError {
+            let err = CugeError::CueConfigNotExistError {
                 cue_config_filename: constant::CUE_CONFIG_FILE_NAME.to_string(),
                 istio_api_dir_path: self.istio_api_path.display().to_string(),
             };
@@ -39,7 +41,7 @@ impl Cuge {
         {
             Ok(o) => o,
             Err(e) => {
-                let err = GenoError::CommandError {
+                let err = CugeError::CommandError {
                     detail: format!("{}", e),
                 };
                 anyhow::bail!("{}", err);
@@ -48,7 +50,7 @@ impl Cuge {
 
         if !output.status.success() {
             let detail = String::from_utf8_lossy(&output.stderr);
-            let err = GenoError::CueGenError {
+            let err = CugeError::CueGenError {
                 detail: detail.into(),
             };
             anyhow::bail!("{}", err);
@@ -57,16 +59,16 @@ impl Cuge {
         Ok(())
     }
 
-    pub fn change_to_istio_api_dir(&self) -> Result<(), GenoError> {
+    pub fn change_to_istio_api_dir(&self) -> Result<(), CugeError> {
         self.change_working_directory(&self.istio_api_path)
     }
 
-    pub fn change_to_codegen_dir(&self) -> Result<(), GenoError> {
+    pub fn change_to_codegen_dir(&self) -> Result<(), CugeError> {
         self.change_working_directory(&self.codegen_working_directory)
     }
 
-    fn change_working_directory(&self, dir: &Path) -> Result<(), GenoError> {
-        env::set_current_dir(dir).map_err(|e| GenoError::ChangeDirectoryError {
+    fn change_working_directory(&self, dir: &Path) -> Result<(), CugeError> {
+        env::set_current_dir(dir).map_err(|e| CugeError::ChangeDirectoryError {
             dir: dir.display().to_string(),
             detail: format!("{}", e),
         })
@@ -102,14 +104,73 @@ impl Cuge {
             fs::create_dir_all(openapi_json_dir.as_path())?;
         }
 
-        debug!("copying from `{}` to `{}`", target_file_path.display(), openapi_json_file_path.display());
+        debug!(
+            "copying from `{}` to `{}`",
+            target_file_path.display(),
+            openapi_json_file_path.display()
+        );
         fs::copy(target_file_path.as_path(), openapi_json_file_path.as_path())?;
+
+        debug!(
+            "adding `Path` field to `{}`",
+            openapi_json_file_path.display()
+        );
+        self.add_path_field_to_openapi_json(openapi_json_file_path.as_path())?;
+
+        Ok(())
+    }
+
+    fn add_path_field_to_openapi_json(
+        &self,
+        openapi_json_file_path: &Path,
+    ) -> Result<(), CugeError> {
+        let content = match fs::read_to_string(openapi_json_file_path) {
+            Ok(c) => c,
+            Err(e) => {
+                let err = CugeError::AddPathFieldError {
+                    path: openapi_json_file_path.to_string_lossy().into(),
+                    detail: format!("{}", e),
+                };
+                return Err(err);
+            }
+        };
+        let mut de = Deserializer::from_str(content.as_str());
+        let mut json_value =
+            Value::deserialize(&mut de).map_err(|e| CugeError::ModifyOpenApiJsonError {
+                path: openapi_json_file_path.to_string_lossy().into(),
+                detail: format!("{}", e),
+            })?;
+
+        let key = String::from("paths");
+        let value = json!({});
+
+        if let Some(obj) = json_value.as_object_mut() {
+            obj.insert(key, value);
+            let new_content = serde_json::to_string_pretty(obj).map_err(|e| {
+                CugeError::ModifyOpenApiJsonError {
+                    path: openapi_json_file_path.to_string_lossy().into(),
+                    detail: format!("{}", e),
+                }
+            })?;
+            fs::write(openapi_json_file_path, new_content).map_err(|e| {
+                CugeError::ModifyOpenApiJsonError {
+                    path: openapi_json_file_path.to_string_lossy().into(),
+                    detail: format!("{}", e),
+                }
+            })?;
+        } else {
+            return Err(CugeError::ModifyOpenApiJsonError {
+                path: openapi_json_file_path.to_string_lossy().into(),
+                detail: format!("cannot read JSON object, check content"),
+            });
+        }
+
         Ok(())
     }
 }
 
 #[derive(Error, Debug)]
-pub enum GenoError {
+pub enum CugeError {
     #[error("cannot change working directory to `{dir:?}` : {detail:?}")]
     ChangeDirectoryError { dir: String, detail: String },
     #[error("cue-gen command execution failed: {detail:?}")]
@@ -121,4 +182,8 @@ pub enum GenoError {
         cue_config_filename: String,
         istio_api_dir_path: String,
     },
+    #[error("cannot add field to `{path:?}` : {detail:?}")]
+    AddPathFieldError { path: String, detail: String },
+    #[error("cannot modify OpenAPI JSON on `{path:?}` : {detail:?}")]
+    ModifyOpenApiJsonError { path: String, detail: String },
 }
