@@ -1,3 +1,5 @@
+use phf::phf_map;
+
 pub const ISTIO_API_DIR: &'static str = "api";
 pub const OPENAPI_JSON_DIR: &'static str = "openapi-json";
 pub const OUTPUT_DIR: &'static str = "output";
@@ -158,6 +160,10 @@ pub const ISTIO_1_15_TARGET_FILES: &'static [&'static str] = &[
     "type/v1beta1/selector.gen.json",
     "operator/v1alpha1/operator.gen.json",
 ];
+
+pub const ISTIO_SPECIAL_OPENAPI_TARGET_FILE: &'static phf::Map<&'static str, &'static str> = &phf_map!{
+    "extensions/v1alpha1/wasm.gen.json" => "extensions/v1alpha1/wasm_plugin.gen.json",
+};
 
 pub const ISTIO_API_VERSION_INFO_1_10: &'static IstioApiVersionInfo = &IstioApiVersionInfo {
     version: "1.10.0",

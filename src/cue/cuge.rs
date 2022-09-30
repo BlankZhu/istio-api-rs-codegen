@@ -92,11 +92,18 @@ impl Cuge {
         }
         let istio_version_section =
             dot_2_underscore(extract_major_and_minor(istio_version).as_str());
-        let openapi_json_file_path = self
+
+        
+        let mut openapi_json_file_path = self
             .codegen_working_directory
             .join(constant::OPENAPI_JSON_DIR)
-            .join(istio_version_section)
-            .join(target_file);
+            .join(istio_version_section);
+        
+        if let Some(new_target_file) = constant::ISTIO_SPECIAL_OPENAPI_TARGET_FILE.get(target_file) {
+            openapi_json_file_path = openapi_json_file_path.join(new_target_file);
+        } else {
+            openapi_json_file_path = openapi_json_file_path.join(target_file)
+        }
 
         let mut openapi_json_dir = openapi_json_file_path.clone();
         openapi_json_dir.pop();

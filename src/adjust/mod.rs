@@ -176,6 +176,22 @@ impl Adva {
 
         Ok(())
     }
+
+    fn modify_codes(&self, resource_dir_path: &Path, info: &OpaiInfo) -> Result<(), AdvaError> {
+        todo!()
+    }
+
+    fn modify_mod_rs(&self, mod_rs_path: &Path, info: &OpaiInfo) -> Result<(), AdvaError> {
+        todo!()
+    }
+
+    fn modify_compoment_rs(&self, component_rs_path: &Path, info: &OpaiInfo) -> Result<(), AdvaError> {
+        todo!()
+    }
+
+    fn modify_spec_rs(&self, spec_rs_path: &Path, info: &OpaiInfo) -> Result<(), AdvaError> {
+        todo!()
+    }
 }
 
 #[derive(Error, Debug)]
@@ -186,4 +202,6 @@ pub enum AdvaError {
     RefactorError { path: String, detail: String },
     #[error("cannot rename output rust codes in directory `{path:?}` : {detail:?}")]
     RenameError { path: String, detail: String },
+    #[error("cannot modify rust codefile content at `{path:?}` : {detail:?}")]
+    ModifyError { path: String, detail: String },
 }
