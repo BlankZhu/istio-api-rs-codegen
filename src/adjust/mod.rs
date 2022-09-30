@@ -6,7 +6,10 @@ use std::{
 use log::{debug, info};
 use thiserror::Error;
 
-use crate::util::opai::{Opai, OpaiInfo};
+use crate::util::{
+    self,
+    opai::{Opai, OpaiInfo},
+};
 
 pub struct Adva {
     output_dir: PathBuf,
@@ -178,15 +181,84 @@ impl Adva {
     }
 
     fn modify_codes(&self, resource_dir_path: &Path, info: &OpaiInfo) -> Result<(), AdvaError> {
-        todo!()
+        let rd = fs::read_dir(resource_dir_path).map_err(|e| AdvaError::ModifyError {
+            path: format!("{}", resource_dir_path.display()),
+            detail: format!("{}", e),
+        })?;
+
+        for entry in rd {
+            let entry = entry.map_err(|e| AdvaError::ModifyError {
+                path: format!("{}", resource_dir_path.display()),
+                detail: format!("{}", e),
+            })?;
+
+            let filename: String = entry.file_name().to_string_lossy().into();
+            if filename == "mod.rs" {
+                self.modify_mod_rs(&entry.path(), info)?;
+                continue;
+            }
+            if filename == info.resource.clone() + ".rs" {
+                self.modify_spec_rs(&entry.path(), info)?;
+                continue;
+            }
+            self.modify_compoment_rs(&entry.path(), info)?;
+        }
+
+        Ok(())
     }
 
     fn modify_mod_rs(&self, mod_rs_path: &Path, info: &OpaiInfo) -> Result<(), AdvaError> {
-        todo!()
+        let content = fs::read_to_string(mod_rs_path).map_err(|e| AdvaError::ModifyModRsError {
+            path: format!("{}", mod_rs_path.display()),
+            detail: format!("{}", e),
+        })?;
+
+        let prefix1 = format!("istio_{}_{}_", info.api_group, info.api_version);
+        let prefix2 = format!(
+            "Istio{}{}",
+            util::first_char_to_upper(info.api_group.as_str()),
+            util::first_char_to_upper(info.api_version.as_str())
+        );
+
+        let content = content.replace(&prefix1, "").replace(&prefix2, "");
+        fs::write(mod_rs_path, content).map_err(|e| AdvaError::ModifyModRsError {
+            path: format!("{}", mod_rs_path.display()),
+            detail: format!("{}", e),
+        })?;
+
+        Ok(())
     }
 
-    fn modify_compoment_rs(&self, component_rs_path: &Path, info: &OpaiInfo) -> Result<(), AdvaError> {
-        todo!()
+    fn modify_compoment_rs(
+        &self,
+        component_rs_path: &Path,
+        info: &OpaiInfo,
+    ) -> Result<(), AdvaError> {
+        let content = fs::read_to_string(component_rs_path).map_err(|e| {
+            AdvaError::ModifyComponentRsError {
+                path: format!("{}", component_rs_path.display()),
+                detail: format!("{}", e),
+            }
+        })?;
+
+        let struct_prefix = format!(
+            "Istio{}{}",
+            util::first_char_to_upper(info.api_group.as_str()),
+            util::first_char_to_upper(info.api_version.as_str())
+        );
+        let import_prefix = String::from("crate::models");
+        let type_workload_selector_import = format!("crate::models::{}WorkloadSelector", struct_prefix);
+
+        // todo: replace workload selector first
+        let content = content
+            .replace(&struct_prefix, "")
+            .replace(&import_prefix, "super");
+        fs::write(component_rs_path, content).map_err(|e| AdvaError::ModifyComponentRsError {
+            path: format!("{}", component_rs_path.display()),
+            detail: format!("{}", e),
+        })?;
+
+        Ok(())
     }
 
     fn modify_spec_rs(&self, spec_rs_path: &Path, info: &OpaiInfo) -> Result<(), AdvaError> {
@@ -204,4 +276,10 @@ pub enum AdvaError {
     RenameError { path: String, detail: String },
     #[error("cannot modify rust codefile content at `{path:?}` : {detail:?}")]
     ModifyError { path: String, detail: String },
+    #[error("cannot modify mod.rs at `{path:?}` : {detail:?}")]
+    ModifyModRsError { path: String, detail: String },
+    #[error("cannot modify component rust codes at `{path:?}` : {detail:?}")]
+    ModifyComponentRsError { path: String, detail: String },
+    #[error("cannot modify specification rust codes at `{path:?}` : {detail:?}")]
+    ModifySpecRsError { path: String, detail: String },
 }

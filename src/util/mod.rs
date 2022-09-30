@@ -14,3 +14,13 @@ pub fn extract_major_and_minor(istio_version: &str) -> String {
 pub fn dot_2_underscore(istio_version: &str) -> String {
     istio_version.replace(".", "_")
 }
+
+/// convert first char in given `s` to uppercase if possible
+pub fn first_char_to_upper(s: &str) -> String {
+    if s.len() >= 1 {
+        let first = s[..1].to_uppercase();
+        let left = s[1..].to_string();
+        return first + &left
+    }
+    s.to_string()
+}
