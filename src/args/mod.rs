@@ -23,6 +23,9 @@ pub struct Args {
 
     #[clap(short, long, value_parser, default_value_t = false)]
     pub generate_rust_codes: bool,
+
+    #[clap(short, long, value_parser, default_value_t = false)]
+    pub adjust_generated_rust_codes: bool,
 }
 
 impl Args {

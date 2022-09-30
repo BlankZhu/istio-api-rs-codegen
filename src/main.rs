@@ -1,7 +1,8 @@
+use adjust::Adva;
 use clap::Parser;
 use log::{error, info};
 
-use crate::{cue::cuge::Cuge, cue::cutter::Cutter, git::Gitter, openapi::Opai};
+use crate::{cue::cuge::Cuge, cue::cutter::Cutter, git::Gitter, openapi::Ogen};
 
 pub mod adjust;
 pub mod args;
@@ -37,6 +38,10 @@ fn main() {
 
     if args.generate_rust_codes {
         generate_rust_codes(&args);
+    }
+
+    if args.adjust_generated_rust_codes {
+        adjust_generated_rust_codes(&args)
     }
 
     info!("codegen done");
@@ -133,15 +138,27 @@ fn setup_openapi_directory(args: &args::Args) {
 fn generate_rust_codes(args: &args::Args) {
     info!("generating rust codes ...");
 
-    let opai = Opai::new(
+    let ogen = Ogen::new(
         std::path::Path::new(constant::OPENAPI_JSON_DIR).to_path_buf(),
-        std::path::Path::new(&args.openapi_generator_cli_jar_path).to_path_buf(),        
-        std::path::Path::new(&args.output_dir_path).to_path_buf()
+        std::path::Path::new(&args.openapi_generator_cli_jar_path).to_path_buf(),
+        std::path::Path::new(&args.output_dir_path).to_path_buf(),
     );
     info!("generating rust code from OpenAPI JSONs ...");
-    if let Err(e) = opai.openapi_generate() {
+    if let Err(e) = ogen.openapi_generate() {
         error!("failed to generate rust code, detail: {}", e);
     }
 
     info!("rust codes generated");
+}
+
+fn adjust_generated_rust_codes(args: &args::Args) {
+    info!("adjusting generated rust codes ...");
+    let adva = Adva::new(
+        std::path::Path::new(constant::OPENAPI_JSON_DIR).to_path_buf(),
+        std::path::Path::new(&args.output_dir_path).to_path_buf(),
+    );
+    if let Err(e) = adva.adjust() {
+        error!("failed to adjust rust code, detail: {}", e);
+    }
+    info!("rust codes adjusting fininshed")
 }

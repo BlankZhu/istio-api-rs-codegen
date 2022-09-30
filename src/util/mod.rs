@@ -1,3 +1,5 @@
+pub mod opai; 
+
 /// extract "MAJOR.MINOR" from "MAJOR.MINOR.PATCH"
 pub fn extract_major_and_minor(istio_version: &str) -> String {
     let dot_indexes: Vec<_> = istio_version.match_indices(".").collect();
