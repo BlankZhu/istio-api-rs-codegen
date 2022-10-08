@@ -45,6 +45,7 @@ impl Adva {
         self.prune_resource_dir(resource_dir_path.as_path())?;
         self.refactor_resource_dir(resource_dir_path.as_path())?;
         self.rename_resource_dir_files(resource_dir_path.as_path(), &info)?;
+        self.modify_codes(resource_dir_path.as_path(), &info)?;
         Ok(())
     }
 
@@ -150,9 +151,16 @@ impl Adva {
             if entry.path().is_file() {
                 let filename: String = entry.file_name().to_string_lossy().into();
 
-                // extra check for `istio_type_v1beta1_workload_selector.rs`
-                if filename == "istio_type_v1beta1_workload_selector.rs" {
+                // extra check for `istio_GROUP_VERSION_workload_selector.rs`
+                let useless_workload_selector_filename = format!(
+                    "istio_{}_{}_workload_selector.rs",
+                    info.api_group, info.api_version
+                );
+                if filename == useless_workload_selector_filename
+                    || filename == "istio_type_v1beta1_workload_selector.rs"
+                {
                     if info.api_group != "type" {
+                        debug!("removing {}", entry.path().display());
                         fs::remove_file(entry.path()).map_err(|e| AdvaError::RenameError {
                             path: format!("{}", entry.path().display()),
                             detail: format!("{}", e),
@@ -194,14 +202,25 @@ impl Adva {
 
             let filename: String = entry.file_name().to_string_lossy().into();
             if filename == "mod.rs" {
+                debug!("modifying mod.rs at {}", entry.path().display());
                 self.modify_mod_rs(&entry.path(), info)?;
                 continue;
             }
             if filename == info.resource.clone() + ".rs" {
+                debug!(
+                    "modifying resource file {} at {}",
+                    filename,
+                    entry.path().display()
+                );
                 self.modify_spec_rs(&entry.path(), info)?;
                 continue;
             }
-            self.modify_compoment_rs(&entry.path(), info)?;
+            debug!(
+                "modifying component file {} at {}",
+                filename,
+                entry.path().display()
+            );
+            self.modify_component_rs(&entry.path(), info)?;
         }
 
         Ok(())
@@ -219,8 +238,15 @@ impl Adva {
             util::first_char_to_upper(info.api_group.as_str()),
             util::first_char_to_upper(info.api_version.as_str())
         );
+        let workload_selector_mod = "pub mod workload_selector;\n".to_string();
+        let workload_selector_use =
+            "pub use self::workload_selector::WorkloadSelector;\n".to_string();
 
-        let content = content.replace(&prefix1, "").replace(&prefix2, "");
+        let content = content
+            .replace(&prefix1, "")
+            .replace(&prefix2, "")
+            .replace(&workload_selector_mod, "")
+            .replace(&workload_selector_use, "");
         fs::write(mod_rs_path, content).map_err(|e| AdvaError::ModifyModRsError {
             path: format!("{}", mod_rs_path.display()),
             detail: format!("{}", e),
@@ -229,7 +255,7 @@ impl Adva {
         Ok(())
     }
 
-    fn modify_compoment_rs(
+    fn modify_component_rs(
         &self,
         component_rs_path: &Path,
         info: &OpaiInfo,
@@ -240,28 +266,61 @@ impl Adva {
                 detail: format!("{}", e),
             }
         })?;
-
-        let struct_prefix = format!(
-            "Istio{}{}",
-            util::first_char_to_upper(info.api_group.as_str()),
-            util::first_char_to_upper(info.api_version.as_str())
-        );
-        let import_prefix = String::from("crate::models");
-        let type_workload_selector_import = format!("crate::models::{}WorkloadSelector", struct_prefix);
-
-        // todo: replace workload selector first
-        let content = content
-            .replace(&struct_prefix, "")
-            .replace(&import_prefix, "super");
+        let content = self.rust_code_normal_replacement(info, &content);
         fs::write(component_rs_path, content).map_err(|e| AdvaError::ModifyComponentRsError {
             path: format!("{}", component_rs_path.display()),
+            detail: format!("{}", e),
+        })?;
+        Ok(())
+    }
+
+    fn modify_spec_rs(&self, spec_rs_path: &Path, info: &OpaiInfo) -> Result<(), AdvaError> {
+        let content =
+            fs::read_to_string(spec_rs_path).map_err(|e| AdvaError::ModifySpecRsError {
+                path: format!("{}", spec_rs_path.display()),
+                detail: format!("{}", e),
+            })?;
+
+        let content = self.rust_code_normal_replacement(info, &content);
+
+        // add imports & traits
+        // todo
+
+        fs::write(spec_rs_path, content).map_err(|e| AdvaError::ModifySpecRsError {
+            path: format!("{}", spec_rs_path.display()),
             detail: format!("{}", e),
         })?;
 
         Ok(())
     }
 
-    fn modify_spec_rs(&self, spec_rs_path: &Path, info: &OpaiInfo) -> Result<(), AdvaError> {
+    fn rust_code_normal_replacement(&self, info: &OpaiInfo, content: &String) -> String {
+        let struct_prefix = format!(
+            "Istio{}{}",
+            util::first_char_to_upper(info.api_group.as_str()),
+            util::first_char_to_upper(info.api_version.as_str())
+        );
+        let import_prefix = String::from("crate::models");
+        let type_workload_selector_import =
+            format!("crate::models::{}WorkloadSelector", struct_prefix);
+        let type_workload_selector_import_from_crate = format!(
+            "crate::{}::type::v1beta1::selector::WorkloadSelector",
+            info.istio_version
+        );
+
+        let ret = content
+            .replace(
+                &type_workload_selector_import,
+                &type_workload_selector_import_from_crate,
+            )
+            .replace(&struct_prefix, "")
+            .replace(&import_prefix, "super");
+
+        return ret;
+    }
+
+    fn setup_mod_tree(&self, output_dir_path: &Path) {
+        // todo: check crate::tree::Tena
         todo!()
     }
 }
