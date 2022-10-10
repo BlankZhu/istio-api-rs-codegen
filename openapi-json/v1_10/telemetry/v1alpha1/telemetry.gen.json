@@ -1,0 +1,188 @@
+{
+  "components": {
+    "schemas": {
+      "istio.telemetry.v1alpha1.ProviderRef": {
+        "description": "Used to bind Telemetry configuration to specific providers for targeted customization.",
+        "properties": {
+          "name": {
+            "description": "Required. Name of Telemetry provider in MeshConfig.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "istio.telemetry.v1alpha1.Telemetry": {
+        "description": "Telemetry defines how the telemetry is generated for workloads within a mesh.",
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/istio.type.v1beta1.WorkloadSelector"
+          },
+          "tracing": {
+            "description": "Optional. Tracing configures the tracing behavior for all selected workloads.",
+            "items": {
+              "$ref": "#/components/schemas/istio.telemetry.v1alpha1.Tracing"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "istio.telemetry.v1alpha1.Tracing": {
+        "description": "Tracing configures tracing behavior for workloads within a mesh. It can be used to enable/disable tracing, as well as to set sampling rates and custom tag extraction.",
+        "properties": {
+          "customTags": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/istio.telemetry.v1alpha1.Tracing.CustomTag"
+            },
+            "description": "Optional. Configures additional custom tags to the generated trace spans.",
+            "type": "object"
+          },
+          "disableSpanReporting": {
+            "description": "Controls span reporting. If set to true, no spans will be reported for impacted workloads. This does NOT impact context propagation or trace sampling behavior.",
+            "nullable": true,
+            "type": "boolean"
+          },
+          "providers": {
+            "description": "Optional. Name of provider(s) to use for span reporting. If a provider is not specified, the [default tracing provider][istio.mesh.v1alpha1.MeshConfig.default_tracing_provider] will be used. NOTE: At the moment, only a single provider can be specified in a given Tracing rule.",
+            "items": {
+              "$ref": "#/components/schemas/istio.telemetry.v1alpha1.ProviderRef"
+            },
+            "type": "array"
+          },
+          "randomSamplingPercentage": {
+            "description": "Controls the rate at which traffic will be selected for tracing if no prior sampling decision has been made. If a prior sampling decision has been made, that decision will be respected. However, if no sampling decision has been made (example: no `x-b3-sampled` tracing header was present in the requests), the traffic will be selected for telemetry generation at the percentage specified.",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "istio.telemetry.v1alpha1.Tracing.CustomTag": {
+        "description": "CustomTag defines a tag to be added to a trace span that is based on an operator-supplied value. This value can either be a hard-coded value, a value taken from an environment variable known to the sidecar proxy, or from a request header.",
+        "oneOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "literal": {
+                      "$ref": "#/components/schemas/istio.telemetry.v1alpha1.Tracing.Literal"
+                    }
+                  },
+                  "required": [
+                    "literal"
+                  ]
+                },
+                {
+                  "properties": {
+                    "environment": {
+                      "$ref": "#/components/schemas/istio.telemetry.v1alpha1.Tracing.Environment"
+                    }
+                  },
+                  "required": [
+                    "environment"
+                  ]
+                },
+                {
+                  "properties": {
+                    "header": {
+                      "$ref": "#/components/schemas/istio.telemetry.v1alpha1.Tracing.RequestHeader"
+                    }
+                  },
+                  "required": [
+                    "header"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "literal": {
+                "$ref": "#/components/schemas/istio.telemetry.v1alpha1.Tracing.Literal"
+              }
+            },
+            "required": [
+              "literal"
+            ]
+          },
+          {
+            "properties": {
+              "environment": {
+                "$ref": "#/components/schemas/istio.telemetry.v1alpha1.Tracing.Environment"
+              }
+            },
+            "required": [
+              "environment"
+            ]
+          },
+          {
+            "properties": {
+              "header": {
+                "$ref": "#/components/schemas/istio.telemetry.v1alpha1.Tracing.RequestHeader"
+              }
+            },
+            "required": [
+              "header"
+            ]
+          }
+        ],
+        "type": "object"
+      },
+      "istio.telemetry.v1alpha1.Tracing.Environment": {
+        "properties": {
+          "defaultValue": {
+            "description": "Optional. If the environment variable is not found, this value will be used instead.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the environment variable from which to extract the tag value.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "istio.telemetry.v1alpha1.Tracing.Literal": {
+        "properties": {
+          "value": {
+            "description": "The tag value to use.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "istio.telemetry.v1alpha1.Tracing.RequestHeader": {
+        "properties": {
+          "defaultValue": {
+            "description": "Optional. If the header is not found, this value will be used instead.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the header from which to extract the tag value.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "istio.type.v1beta1.WorkloadSelector": {
+        "description": "WorkloadSelector specifies the criteria used to determine if a policy can be applied to a proxy. The matching criteria includes the metadata associated with a proxy, workload instance info such as labels attached to the pod/VM, or any other info that the proxy provides to Istio during the initial handshake. If multiple conditions are specified, all conditions need to match in order for the workload instance to be selected. Currently, only label based selection mechanism is supported.",
+        "properties": {
+          "matchLabels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "One or more labels that indicate a specific set of pods/VMs on which a policy should be applied. The scope of label search is restricted to the configuration namespace in which the resource is present.",
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "",
+    "version": "v1alpha1"
+  },
+  "openapi": "3.0.0",
+  "paths": {}
+}

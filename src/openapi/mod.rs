@@ -54,7 +54,7 @@ impl Ogen {
             .join(info.istio_version.clone())
             .join(info.api_group.clone())
             .join(info.api_version.clone())
-            .join(info.resource.clone()); // need futher pruning
+            .join(info.resource.clone());
 
         let jar_arg: String = self.openapi_generator_cli_jar_path.to_string_lossy().into();
         let output_arg: String = output_rust_code_dir_path.to_string_lossy().into();

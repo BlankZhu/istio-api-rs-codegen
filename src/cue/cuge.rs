@@ -90,9 +90,7 @@ impl Cuge {
         if !target_file_path.exists() {
             panic!("Path `{}` not exists! You may be using incorrect istio/api version info! Check the codegen's codes!", target_file_path.display())
         }
-        let istio_version_section =
-            dot_2_underscore(extract_major_and_minor(istio_version).as_str());
-
+        let istio_version_section = format!("v{}", dot_2_underscore(extract_major_and_minor(istio_version).as_str()));
         
         let mut openapi_json_file_path = self
             .codegen_working_directory

@@ -315,11 +315,6 @@ impl Adva {
 
         return ret;
     }
-
-    fn setup_mod_tree(&self, output_dir_path: &Path) {
-        // todo: check crate::tree::Tena
-        todo!()
-    }
 }
 
 #[derive(Error, Debug)]
