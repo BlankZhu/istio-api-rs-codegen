@@ -3,7 +3,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use log::{debug, info};
 use thiserror::Error;
 
 use crate::constant::RUST_PRESERVED_KEYWORDS;

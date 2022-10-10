@@ -264,7 +264,13 @@ impl Adva {
                 detail: format!("{}", e),
             }
         })?;
+
         let content = self.rust_code_normal_replacement(info, &content);
+
+        // add imports
+        let imports = String::from("use schemars::JsonSchema;\nuse serde::{Deserialize, Serialize};\n");
+        let content = imports + &content;
+
         fs::write(component_rs_path, content).map_err(|e| AdvaError::ModifyComponentRsError {
             path: format!("{}", component_rs_path.display()),
             detail: format!("{}", e),
