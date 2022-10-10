@@ -2,7 +2,7 @@ use adjust::Adva;
 use clap::Parser;
 use log::{error, info};
 
-use crate::{cue::cuge::Cuge, cue::cutter::Cutter, git::Gitter, openapi::Ogen};
+use crate::{cue::Cuge, cue::Cutter, git::Gitter, openapi::Ogen};
 
 pub mod adjust;
 pub mod args;
@@ -10,7 +10,6 @@ pub mod constant;
 pub mod cue;
 pub mod git;
 pub mod openapi;
-pub mod tree;
 pub mod util;
 
 fn main() {

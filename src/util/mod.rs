@@ -1,4 +1,6 @@
 pub mod opai; 
+pub use opai::Opai;
+pub use opai::OpaiInfo;
 
 /// extract "MAJOR.MINOR" from "MAJOR.MINOR.PATCH"
 pub fn extract_major_and_minor(istio_version: &str) -> String {

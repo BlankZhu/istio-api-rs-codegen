@@ -9,10 +9,3 @@ impl Tena {
         todo!()
     }
 }
-
-
-pub struct Tedd {}
-
-impl Tedd {
-    
-}
