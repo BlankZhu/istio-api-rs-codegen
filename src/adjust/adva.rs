@@ -4,9 +4,10 @@ use std::{
 };
 
 use log::{debug, info};
+use regex::Regex;
 use thiserror::Error;
 
-use crate::util::{self, Opai, OpaiInfo};
+use crate::util::{self, snake_2_camel, Opai, OpaiInfo};
 
 pub struct Adva {
     output_dir: PathBuf,
@@ -280,14 +281,32 @@ impl Adva {
 
         let content = self.rust_code_normal_replacement(info, &content);
 
-        // add imports & traits
-        // todo
+        // add imports
+        let imports = String::from("use kube::CustomResource;\nuse schemars::JsonSchema;\nuse serde::{Deserialize, Serialize};\n");
+        let content = imports + &content;
 
+        // add derive
+        let kube_line = format!(
+            "\n#[kube(group = \"{}\", version = \"{}\", kind = \"{}\", namespaced)]",
+            info.api_group,
+            info.api_version,
+            snake_2_camel(info.resource.as_str())
+        );
+        let re = Regex::new(r"#\[derive\((.*)\)\]").unwrap();
+        let rep = String::from("#[derive($1, JsonSchema, CustomResource)]") + &kube_line;
+        let content: String = re.replace_all(content.as_str(), rep).into();
+
+        // rename resource name into [RESOURCE]Sepc
+        let struct_name =  snake_2_camel(info.resource.as_str());
+        let text_2_replace = format!(" {} ", struct_name);
+        let struct_spec_name = format!(" {}Spec ", struct_name);
+        let content = content.replace(&text_2_replace, &struct_spec_name);
+
+        // save to file
         fs::write(spec_rs_path, content).map_err(|e| AdvaError::ModifySpecRsError {
             path: format!("{}", spec_rs_path.display()),
             detail: format!("{}", e),
         })?;
-
         Ok(())
     }
 

@@ -1,7 +1,12 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use log::{debug, info};
 use thiserror::Error;
+
+use crate::constant::RUST_PRESERVED_KEYWORDS;
 
 pub struct Tena {
     output_dir: PathBuf,
@@ -12,11 +17,12 @@ impl Tena {
         return Tena { output_dir };
     }
 
-    pub fn setup_rust_structure_tree(&self) {
-        todo!()
+    pub fn setup_rust_structure_tree(&self) -> anyhow::Result<()> {
+        self.setup_lib_rs()?;
+        Ok(())
     }
 
-    pub fn setup_lib_rs(&self) -> Result<(), TenaError> {
+    fn setup_lib_rs(&self) -> Result<(), TenaError> {
         // list all istio_versions
         let rd =
             fs::read_dir(self.output_dir.as_path()).map_err(|e| TenaError::LibRsSetupError {
@@ -24,6 +30,7 @@ impl Tena {
                 detail: format!("{}", e),
             })?;
 
+        let mut lib_rs_content = String::new();
         for entry in rd {
             let entry = entry.map_err(|e| TenaError::LibRsSetupError {
                 path: format!("{}", self.output_dir.display()),
@@ -31,15 +38,73 @@ impl Tena {
             })?;
 
             // setup lib.rs content
+            let istio_api_version: String = entry.file_name().to_string_lossy().into();
+            let versioned_content = format!(
+                "#[cfg(feature = \"{}\")] mod {};\n#[cfg(feature = \"{}\")] pub use self::{}::*;\n\n",
+                istio_api_version, istio_api_version, istio_api_version, istio_api_version
+            );
+            lib_rs_content += &versioned_content;
 
-            // deep dive into mod.rs tree
+            if entry.path().is_dir() {
+                // deep dive into mod.rs tree
+                self.setup_mod_rs(entry.path().as_path())?;
+            }
         }
 
-        todo!()
+        // write lib_rs_content to ./lib.rs
+        let lib_rs_path = self.output_dir.join("lib.rs");
+        fs::write(lib_rs_path.as_path(), lib_rs_content).map_err(|e| {
+            TenaError::LibRsSetupError {
+                path: format!("{}", lib_rs_path.display()),
+                detail: format!("{}", e),
+            }
+        })?;
+
+        Ok(())
     }
 
-    pub fn setup_mod_rs(&self) {
-        todo!()
+    fn setup_mod_rs(&self, curr_dir_path: &Path) -> Result<(), TenaError> {
+        let rd = fs::read_dir(curr_dir_path).map_err(|e| TenaError::LibRsSetupError {
+            path: format!("{}", curr_dir_path.display()),
+            detail: format!("{}", e),
+        })?;
+
+        let mut mod_rs_content = String::new();
+        for entry in rd {
+            let entry = entry.map_err(|e| TenaError::LibRsSetupError {
+                path: format!("{}", curr_dir_path.display()),
+                detail: format!("{}", e),
+            })?;
+
+            // setup mod.rs content
+            let mut mod_name = String::new();
+            if entry.path().is_file() {
+                mod_name = entry.path().file_stem().unwrap().to_string_lossy().into();
+                if mod_name == "mod" {
+                    continue;
+                }
+            }
+            if entry.path().is_dir() {
+                mod_name = entry.file_name().to_string_lossy().into();
+                self.setup_mod_rs(entry.path().as_path())?;
+            }
+
+            let mut mod_content = format!("pub mod {};\n", mod_name);
+            if RUST_PRESERVED_KEYWORDS.contains(mod_name.as_str()) {
+                mod_content = format!("pub mod r#{};\n", mod_name);
+            }
+            mod_rs_content += &mod_content;
+        }
+
+        let mod_rs_path = curr_dir_path.join("mod.rs");
+        fs::write(mod_rs_path.as_path(), mod_rs_content).map_err(|e| {
+            TenaError::ModRsSetupError {
+                path: format!("{}", mod_rs_path.display()),
+                detail: format!("{}", e),
+            }
+        })?;
+
+        Ok(())
     }
 }
 

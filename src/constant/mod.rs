@@ -1,4 +1,4 @@
-use phf::phf_map;
+use phf::{phf_map, phf_set};
 
 pub const ISTIO_API_DIR: &'static str = "api";
 pub const OPENAPI_JSON_DIR: &'static str = "openapi-json";
@@ -161,7 +161,7 @@ pub const ISTIO_1_15_TARGET_FILES: &'static [&'static str] = &[
     "operator/v1alpha1/operator.gen.json",
 ];
 
-pub const ISTIO_SPECIAL_OPENAPI_TARGET_FILE: &'static phf::Map<&'static str, &'static str> = &phf_map!{
+pub const ISTIO_SPECIAL_OPENAPI_TARGET_FILE: &'static phf::Map<&'static str, &'static str> = &phf_map! {
     "extensions/v1alpha1/wasm.gen.json" => "extensions/v1alpha1/wasm_plugin.gen.json",
 };
 
@@ -198,3 +198,7 @@ pub const ISTIO_API_VERSION_INFOS: &'static [&'static IstioApiVersionInfo] = &[
     ISTIO_API_VERSION_INFO_1_14,
     ISTIO_API_VERSION_INFO_1_15,
 ];
+
+pub const RUST_PRESERVED_KEYWORDS: &'static phf::Set<&'static str> = &phf_set! {
+    "type"
+};

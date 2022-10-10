@@ -2,7 +2,7 @@ use adjust::Adva;
 use clap::Parser;
 use log::{error, info};
 
-use crate::{cue::Cuge, cue::Cutter, git::Gitter, openapi::Ogen};
+use crate::{adjust::Tena, cue::Cuge, cue::Cutter, git::Gitter, openapi::Ogen};
 
 pub mod adjust;
 pub mod args;
@@ -158,6 +158,10 @@ fn adjust_generated_rust_codes(args: &args::Args) {
     );
     if let Err(e) = adva.adjust() {
         error!("failed to adjust rust code, detail: {}", e);
+    }
+    let tena = Tena::new(std::path::Path::new(&args.output_dir_path).to_path_buf());
+    if let Err(e) = tena.setup_rust_structure_tree() {
+        error!("failed to adjust rust structure tree, detail: {}", e);
     }
     info!("rust codes adjusting fininshed")
 }
