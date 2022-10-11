@@ -84,8 +84,6 @@ impl Tena {
             .map(|entry| entry.path().is_file())
             .fold(true, |acc, curr| acc && curr);
 
-        
-
         for entry in entries.iter() {
             // setup mod.rs content
             let mut mod_name: String = entry.file_name().to_string_lossy().into();
@@ -99,21 +97,7 @@ impl Tena {
                 self.setup_mod_rs(entry.path().as_path())?;
             }
 
-            let mut mod_content = String::new();
-            if is_final {
-                if RUST_PRESERVED_KEYWORDS.contains(mod_name.as_str()) {
-                    mod_content = format!("pub mod r#{};\npub use self::r#{}::{};\n", mod_name, mod_name, snake_2_camel(mod_name.as_str()));
-                } else {
-                    mod_content = format!("pub mod {};\npub use self::{}::{};\n", mod_name, mod_name, snake_2_camel(mod_name.as_str()));
-                }
-            } else {
-                if RUST_PRESERVED_KEYWORDS.contains(mod_name.as_str()) {
-                    mod_content = format!("pub mod r#{};\n", mod_name);
-                } else {
-                    mod_content = format!("pub mod {};\n", mod_name);
-                }
-            }
-            
+            let mod_content = self.gen_mod_rs_content_line(is_final, mod_name.as_str());
             mod_rs_content += &mod_content;
         }
 
@@ -126,6 +110,32 @@ impl Tena {
         })?;
 
         Ok(())
+    }
+
+    fn gen_mod_rs_content_line(&self, is_final: bool, mod_name: &str) -> String {
+        if is_final {
+            if RUST_PRESERVED_KEYWORDS.contains(mod_name) {
+                return format!(
+                    "pub mod r#{};\npub use self::r#{}::{};\n",
+                    mod_name,
+                    mod_name,
+                    snake_2_camel(mod_name)
+                );
+            } else {
+                return format!(
+                    "pub mod {};\npub use self::{}::{};\n",
+                    mod_name,
+                    mod_name,
+                    snake_2_camel(mod_name)
+                );
+            }
+        } else {
+            if RUST_PRESERVED_KEYWORDS.contains(mod_name) {
+                return format!("pub mod r#{};\n", mod_name);
+            } else {
+                return format!("pub mod {};\n", mod_name);
+            }
+        }
     }
 }
 

@@ -150,10 +150,8 @@ impl Adva {
                 let filename: String = entry.file_name().to_string_lossy().into();
 
                 // extra check for `istio_GROUP_VERSION_workload_selector.rs`
-                let useless_workload_selector_filename = format!(
-                    "istio_{}_{}_workload_selector.rs",
-                    info.api_group, info.api_version
-                );
+                let useless_workload_selector_filename =
+                    format!("{}workload_selector.rs", filename_prefix);
                 if filename == useless_workload_selector_filename
                     || filename == "istio_type_v1beta1_workload_selector.rs"
                 {
@@ -165,6 +163,26 @@ impl Adva {
                         })?;
                         continue;
                     }
+                }
+
+                // extra check for `istio_GROUP_VERSION_operator_istio_operator_spec.rs`
+                let irregular_istio_operator_filename =
+                    format!("{}istio_operator_spec.rs", filename_prefix);
+                if filename == irregular_istio_operator_filename {
+                    let new_filename = String::from("operator.rs");
+                    let new_path = resource_dir_path.join(new_filename);
+                    debug!(
+                        "moving irregular {} to {} ...",
+                        entry.path().display(),
+                        new_path.display()
+                    );
+                    fs::rename(entry.path(), new_path.as_path()).map_err(|e| {
+                        AdvaError::RenameError {
+                            path: format!("{}", new_path.display()),
+                            detail: format!("{}", e),
+                        }
+                    })?;
+                    continue;
                 }
 
                 if filename.starts_with(&filename_prefix) {
@@ -309,9 +327,16 @@ impl Adva {
         let content: String = re.replace_all(content.as_str(), rep).into();
 
         // rename resource name into [RESOURCE]Sepc
-        let struct_name = snake_2_camel(info.resource.as_str());
+        let mut struct_name = snake_2_camel(info.resource.as_str());
+        let mut struct_spec_name = format!(" {}Spec ", struct_name);
+
+        // extra codes for operator
+        if &info.resource == "operator" {
+            struct_name = "IstioOperatorSpec".to_string();
+            struct_spec_name = " OperatorSpec ".to_string();
+        }
+
         let text_2_replace = format!(" {} ", struct_name);
-        let struct_spec_name = format!(" {}Spec ", struct_name);
         let content = content.replace(&text_2_replace, &struct_spec_name);
         let content = content.trim();
         // save to file
