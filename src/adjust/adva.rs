@@ -317,7 +317,7 @@ impl Adva {
 
         // add derive
         let kube_line = format!(
-            "\n#[kube(group = \"{}\", version = \"{}\", kind = \"{}\", namespaced)]",
+            "\n#[kube(group = \"{}.istio.io\", version = \"{}\", kind = \"{}\", namespaced)]",
             info.api_group,
             info.api_version,
             snake_2_camel(info.resource.as_str())
