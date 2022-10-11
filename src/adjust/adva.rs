@@ -245,6 +245,7 @@ impl Adva {
             .replace(&prefix2, "")
             .replace(&workload_selector_mod, "")
             .replace(&workload_selector_use, "");
+        let content = content.trim();
         fs::write(mod_rs_path, content).map_err(|e| AdvaError::ModifyModRsError {
             path: format!("{}", mod_rs_path.display()),
             detail: format!("{}", e),
@@ -264,13 +265,18 @@ impl Adva {
                 detail: format!("{}", e),
             }
         })?;
-
         let content = self.rust_code_normal_replacement(info, &content);
 
         // add imports
-        let imports = String::from("use schemars::JsonSchema;\nuse serde::{Deserialize, Serialize};\n");
+        let imports =
+            String::from("use schemars::JsonSchema;\nuse serde::{Deserialize, Serialize};\n");
         let content = imports + &content;
 
+        // add derive
+        let re = Regex::new(r"#\[derive\((.*)\)\]").unwrap();
+        let rep = String::from("#[derive($1, JsonSchema)]");
+        let content: String = re.replace_all(content.as_str(), rep).into();
+        let content = content.trim();
         fs::write(component_rs_path, content).map_err(|e| AdvaError::ModifyComponentRsError {
             path: format!("{}", component_rs_path.display()),
             detail: format!("{}", e),
@@ -303,11 +309,11 @@ impl Adva {
         let content: String = re.replace_all(content.as_str(), rep).into();
 
         // rename resource name into [RESOURCE]Sepc
-        let struct_name =  snake_2_camel(info.resource.as_str());
+        let struct_name = snake_2_camel(info.resource.as_str());
         let text_2_replace = format!(" {} ", struct_name);
         let struct_spec_name = format!(" {}Spec ", struct_name);
         let content = content.replace(&text_2_replace, &struct_spec_name);
-
+        let content = content.trim();
         // save to file
         fs::write(spec_rs_path, content).map_err(|e| AdvaError::ModifySpecRsError {
             path: format!("{}", spec_rs_path.display()),
@@ -323,16 +329,21 @@ impl Adva {
             util::first_char_to_upper(info.api_version.as_str())
         );
         let import_prefix = String::from("crate::models");
-        let type_workload_selector_import =
+        let inner_type_workload_selector_import =
             format!("crate::models::{}WorkloadSelector", struct_prefix);
-        let type_workload_selector_import_from_crate = format!(
-            "crate::{}::type::v1beta1::selector::WorkloadSelector",
-            info.istio_version
-        );
+        let outter_type_workload_selector_import =
+            String::from("crate::models::IstioTypeV1beta1WorkloadSelector");
+        // let type_workload_selector_import2 = format!("{}")
+        let type_workload_selector_import_from_crate =
+            String::from("crate::r#type::v1beta1::selector::workload_selector::WorkloadSelector");
 
         let ret = content
             .replace(
-                &type_workload_selector_import,
+                &inner_type_workload_selector_import,
+                &type_workload_selector_import_from_crate,
+            )
+            .replace(
+                &outter_type_workload_selector_import,
                 &type_workload_selector_import_from_crate,
             )
             .replace(&struct_prefix, "")

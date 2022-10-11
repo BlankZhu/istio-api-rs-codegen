@@ -5,7 +5,7 @@ use std::{
 
 use thiserror::Error;
 
-use crate::constant::RUST_PRESERVED_KEYWORDS;
+use crate::{constant::RUST_PRESERVED_KEYWORDS, util::snake_2_camel};
 
 pub struct Tena {
     output_dir: PathBuf,
@@ -69,14 +69,26 @@ impl Tena {
         })?;
 
         let mut mod_rs_content = String::new();
+        let mut entries = Vec::new();
+
         for entry in rd {
             let entry = entry.map_err(|e| TenaError::LibRsSetupError {
                 path: format!("{}", curr_dir_path.display()),
                 detail: format!("{}", e),
             })?;
+            entries.push(entry);
+        }
 
+        let is_final = entries
+            .iter()
+            .map(|entry| entry.path().is_file())
+            .fold(true, |acc, curr| acc && curr);
+
+        
+
+        for entry in entries.iter() {
             // setup mod.rs content
-            let mut mod_name = String::new();
+            let mut mod_name: String = entry.file_name().to_string_lossy().into();
             if entry.path().is_file() {
                 mod_name = entry.path().file_stem().unwrap().to_string_lossy().into();
                 if mod_name == "mod" {
@@ -84,14 +96,24 @@ impl Tena {
                 }
             }
             if entry.path().is_dir() {
-                mod_name = entry.file_name().to_string_lossy().into();
                 self.setup_mod_rs(entry.path().as_path())?;
             }
 
-            let mut mod_content = format!("pub mod {};\n", mod_name);
-            if RUST_PRESERVED_KEYWORDS.contains(mod_name.as_str()) {
-                mod_content = format!("pub mod r#{};\n", mod_name);
+            let mut mod_content = String::new();
+            if is_final {
+                if RUST_PRESERVED_KEYWORDS.contains(mod_name.as_str()) {
+                    mod_content = format!("pub mod r#{};\npub use self::r#{}::{};\n", mod_name, mod_name, snake_2_camel(mod_name.as_str()));
+                } else {
+                    mod_content = format!("pub mod {};\npub use self::{}::{};\n", mod_name, mod_name, snake_2_camel(mod_name.as_str()));
+                }
+            } else {
+                if RUST_PRESERVED_KEYWORDS.contains(mod_name.as_str()) {
+                    mod_content = format!("pub mod r#{};\n", mod_name);
+                } else {
+                    mod_content = format!("pub mod {};\n", mod_name);
+                }
             }
+            
             mod_rs_content += &mod_content;
         }
 
