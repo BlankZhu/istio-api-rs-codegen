@@ -29,13 +29,18 @@ impl Tena {
                 detail: format!("{}", e),
             })?;
 
-        let mut lib_rs_content = String::new();
+        let mut entries = Vec::new();
         for entry in rd {
             let entry = entry.map_err(|e| TenaError::LibRsSetupError {
                 path: format!("{}", self.output_dir.display()),
                 detail: format!("{}", e),
             })?;
+            entries.push(entry);
+        }
+        entries.sort_by(|lhs, rhs| lhs.file_name().cmp(&rhs.file_name()));
 
+        let mut lib_rs_content = String::new();
+        for entry in entries {
             // setup lib.rs content
             let istio_api_version: String = entry.file_name().to_string_lossy().into();
             let versioned_content = format!(
@@ -49,6 +54,7 @@ impl Tena {
                 self.setup_mod_rs(entry.path().as_path())?;
             }
         }
+        let lib_rs_content = lib_rs_content.trim();
 
         // write lib_rs_content to ./lib.rs
         let lib_rs_path = self.output_dir.join("lib.rs");
@@ -70,7 +76,6 @@ impl Tena {
 
         let mut mod_rs_content = String::new();
         let mut entries = Vec::new();
-
         for entry in rd {
             let entry = entry.map_err(|e| TenaError::LibRsSetupError {
                 path: format!("{}", curr_dir_path.display()),
@@ -78,6 +83,7 @@ impl Tena {
             })?;
             entries.push(entry);
         }
+        entries.sort_by(|lhs, rhs| lhs.file_name().cmp(&rhs.file_name()));
 
         let is_final = entries
             .iter()
@@ -100,6 +106,7 @@ impl Tena {
             let mod_content = self.gen_mod_rs_content_line(is_final, mod_name.as_str());
             mod_rs_content += &mod_content;
         }
+        let mod_rs_content = mod_rs_content.trim();
 
         let mod_rs_path = curr_dir_path.join("mod.rs");
         fs::write(mod_rs_path.as_path(), mod_rs_content).map_err(|e| {
