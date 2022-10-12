@@ -5,12 +5,4 @@ jar/
 output/
 api/
 target/
-
-openapi-json/1_10/*
-openapi-json/1_11/*
-openapi-json/1_12/*
-openapi-json/1_13/*
-openapi-json/1_14/*
-openapi-json/1_15/*
-!clean.sh
-!setup.sh
+openapi-json/
