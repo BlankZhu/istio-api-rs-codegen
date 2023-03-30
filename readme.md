@@ -14,4 +14,4 @@ In short, Kopium shows a good vision of kube-rs compatible codegen. However, Kop
 
 The codegen in this branch is workable itself, but the generated codes are not. 
 
-It will be great if Kopium provide a full-functional version in the future. Try Kopium later.
+Currently, some of the generated codes are modified by the maintainer, which finally makes the codes runnable.
