@@ -29,3 +29,35 @@ All the codes will be generated at `./output`, you can also check `./resources` 
 You can also make a release build the binary instead of using `cargo run` for better performance. For more information, use `-h`, or just dive into the sources!
 
 Feel free to use or start any issue!
+
+## Output Modification
+
+Currently, generated codes require following modifications:
+
+Replace:
+
+```rust
+    /// Percentage of the traffic to be mirrored by the `mirror` field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mirror_percent: Option<i64>,
+
+    // ...
+    // and
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jwks_uri: Option<String>,
+```
+
+To:
+
+```rust
+    /// Percentage of the traffic to be mirrored by the `mirror` field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mirror_percent_1: Option<i64>,
+
+    // ...
+    // and
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jwks_uri_1: Option<String>,
+```
