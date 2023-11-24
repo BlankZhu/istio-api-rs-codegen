@@ -34,30 +34,29 @@ Feel free to use or start any issue!
 
 Currently, generated codes require following modifications:
 
-Replace:
+
+Delete:
 
 ```rust
+
     /// Percentage of the traffic to be mirrored by the `mirror` field.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mirror_percent: Option<i64>,
-
-    // ...
-    // and
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub jwks_uri: Option<String>,
 ```
 
-To:
+Delete:
 
 ```rust
-    /// Percentage of the traffic to be mirrored by the `mirror` field.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub mirror_percent_1: Option<i64>,
-
-    // ...
-    // and
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub jwks_uri_1: Option<String>,
+    pub mirror_percent: Option<i64>,
+```
+
+Delete:
+
+```rust
+
+    /// URL of the provider's public key set to validate signature of the JWT.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jwks_uri: Option<String>,
 ```
