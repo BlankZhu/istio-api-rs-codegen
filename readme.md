@@ -60,3 +60,11 @@ Delete:
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub jwks_uri: Option<String>,
 ```
+
+Delete:
+
+```rust
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jwks_uri: Option<String>,
+```
