@@ -326,8 +326,6 @@ impl Generator {
             yaml_file_path.to_str().unwrap(),
             "--api-version",
             api_ver.to_str().unwrap(),
-            "-D",
-            "Default"
         ]);
         debug!("call kopium using command: {:?}", kopium_cmd);
         let output = kopium_cmd.output().unwrap();
