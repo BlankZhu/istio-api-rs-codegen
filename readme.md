@@ -2,20 +2,6 @@
 
 istio-api-rs-codegen is a code generator using Kopium. It generate Rust code directly from the Istio CRD yaml file.
 
-pros:
-1. Kopium use Istio CRD directly, skipping OpenAPI JSONs.
-2. Pure rust codegen.
-
-cons: (already solved in kopium 0.17.2)
-1. Currently, kopium will generated duplicate Rust code fields (bug, though using 'rename').
-2. Kopium will miss some structs, most of them are duplicate or error generated.
-
-In short, Kopium shows a good vision of kube-rs compatible codegen. However, Kopium is not stable yet, which means it not ready for kube-rs compatible Istio CRD codegen.
-
-The codegen in this branch is workable itself, but the generated codes are not. 
-
-Currently, some of the generated codes should modified by the maintainer, which finally makes the codes runnable.
-
 ## Getting started
 
 To start quickly, just run:
@@ -29,3 +15,13 @@ All the codes will be generated at `./output`, you can also check `./resources` 
 You can also make a release build the binary instead of using `cargo run` for better performance. For more information, use `-h`, or just dive into the sources!
 
 Feel free to use or start any issue!
+
+## Add new version for istio
+
+To update the generated code for newest istio, do:
+
+1. Check new version of `kopium` simply by running `cargo install kopium`.
+2. Check new version of `k8s-openapi` to update the supported kubernetes API version (with the crate feature).
+3. Add new version string in `src/constant/mod.rs`: modify the `ISTIO_VERSIONS` variable by adding a `MAJOR.MINOR.0` version string.
+4. Run `istio-api-rs-codegen` by `cargo run -- -f -r -g`.
+5. Fetch the newest codes in `output/`
