@@ -21,7 +21,7 @@ Feel free to use or start any issue!
 To update the generated code for newest istio, do:
 
 1. Check new version of `kopium` simply by running `cargo install kopium`.
-2. Check new version of `k8s-openapi` to update the supported kubernetes API version (with the crate feature).
+2. Check new version of `k8s-openapi` to update the supported kubernetes API version (with the crate feature). Also check the `kube` crate's version if possible.
 3. Add new version string in `src/constant/mod.rs`: modify the `ISTIO_VERSIONS` variable by adding a `MAJOR.MINOR.0` version string.
 4. Run `istio-api-rs-codegen` by `cargo run -- -f -r -g`.
 5. Fetch the newest codes in `output/`
