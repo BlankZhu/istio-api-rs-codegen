@@ -1,4 +1,4 @@
-use crate::{constant, r#type, utility};
+use crate::{constant, utility};
 use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
 use log::warn;
 use log::{debug, error};
@@ -14,7 +14,7 @@ impl Resolver {
         return Resolver {};
     }
 
-    pub fn resolve(&self, istio_version: &str) -> r#type::Result<()> {
+    pub fn resolve(&self, istio_version: &str) -> utility::Result<()> {
         let tmp_dir = path::Path::new(constant::ISTIO_CRD_TEMP_DIRECTORY);
         let versioned_tmp_dir =
             tmp_dir.join(utility::istio_version_to_directory_name(istio_version));
@@ -64,7 +64,7 @@ impl Resolver {
     fn split_yamls(
         &self,
         yaml_file_path: &path::Path,
-    ) -> r#type::Result<Vec<CustomResourceDefinition>> {
+    ) -> utility::Result<Vec<CustomResourceDefinition>> {
         let content = match fs::read_to_string(yaml_file_path) {
             Ok(c) => c,
             Err(e) => {
@@ -116,7 +116,7 @@ impl Resolver {
         istio_api_group: &str,
         api_version: &str,
         kind: &str,
-    ) -> r#type::Result<()> {
+    ) -> utility::Result<()> {
         let tmp_dir_path = path::Path::new(constant::ISTIO_CRD_TEMP_DIRECTORY);
         let versioned_dir_path =
             tmp_dir_path.join(utility::istio_version_to_directory_name(istio_version));

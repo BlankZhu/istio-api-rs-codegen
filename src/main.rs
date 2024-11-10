@@ -7,11 +7,10 @@ mod fetcher;
 mod generator;
 mod option;
 mod resolver;
-mod r#type;
 mod utility;
 
 #[tokio::main]
-async fn main() -> r#type::Result<()> {
+async fn main() -> utility::Result<()> {
     let opt = option::Option::parse();
 
     env_logger::init();
