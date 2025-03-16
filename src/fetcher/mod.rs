@@ -1,5 +1,5 @@
 use crate::constant;
-use crate::r#type;
+use crate::constant::{ISTIO_CRD_ALL_URL_SUFFIX_0, ISTIO_CRD_ALL_URL_SUFFIX_1};
 use crate::utility;
 use log::{error, info};
 use std::fs;
@@ -21,7 +21,7 @@ impl Fetcher {
         };
     }
 
-    pub async fn fetch(&self, istio_version: &str) -> r#type::Result<()> {
+    pub async fn fetch(&self, istio_version: &str) -> utility::Result<()> {
         if let Some(crd_yaml) = self.get_crd_yaml(istio_version).await {
             if let Err(e) = self.save_to_tmp_dir(istio_version, crd_yaml) {
                 return Err(e);
@@ -32,10 +32,25 @@ impl Fetcher {
     }
 
     async fn get_crd_yaml(&self, istio_version: &str) -> Option<String> {
+        // determine which suffix to use since istio 1.24
+        let curr_ver = match utility::istio_version::IstioVersion::from_istio_version_str(istio_version) {
+            Ok(ver) => ver,
+            Err(e) => {
+                error!("failed to parse istio version string: {}", e);
+                return None;
+            },
+        };
+
+        let mut suffix = ISTIO_CRD_ALL_URL_SUFFIX_0;
+        let ver124 = utility::istio_version::IstioVersion::from_istio_version_str("1.24.0").unwrap();
+        if curr_ver >= ver124 {
+            suffix = ISTIO_CRD_ALL_URL_SUFFIX_1;
+        }
+
         let url = [
             constant::ISTIO_CRD_ALL_URL_PREFIX,
             istio_version,
-            constant::ISTIO_CRD_ALL_URL_SUFFIX,
+            suffix,
         ]
         .join("");
 
@@ -59,7 +74,7 @@ impl Fetcher {
         }
     }
 
-    fn save_to_tmp_dir(&self, istio_version: &str, content: String) -> r#type::Result<()> {
+    fn save_to_tmp_dir(&self, istio_version: &str, content: String) -> utility::Result<()> {
         let tmp_dir = path::Path::new(constant::ISTIO_CRD_TEMP_DIRECTORY);
         let save_dir = tmp_dir.join(utility::istio_version_to_directory_name(istio_version));
         let save_dir = save_dir.as_path();

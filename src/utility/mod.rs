@@ -1,4 +1,8 @@
+pub mod istio_version;
+
 use regex::Regex;
+
+pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 pub fn istio_version_to_directory_name(version: &str) -> String {
     let mut ret = version.replace(".", "_");

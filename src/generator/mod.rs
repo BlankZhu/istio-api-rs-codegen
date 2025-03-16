@@ -1,6 +1,5 @@
 use crate::constant;
 use crate::error;
-use crate::r#type;
 use crate::utility;
 use log::warn;
 use log::{debug, info};
@@ -17,7 +16,7 @@ impl Generator {
         return Generator {};
     }
 
-    pub fn generate(&self, istio_crd_temp_directory: &str) -> r#type::Result<()> {
+    pub fn generate(&self, istio_crd_temp_directory: &str) -> utility::Result<()> {
         let path = path::Path::new(istio_crd_temp_directory);
         self.read_istio_version_dir(path);
         Ok(())
@@ -251,7 +250,7 @@ impl Generator {
         api_group: &OsStr,
         api_ver: &OsStr,
         kind: &OsStr,
-    ) -> r#type::Result<path::PathBuf> {
+    ) -> utility::Result<path::PathBuf> {
         let base_dir = path::Path::new(constant::ISTIO_CRD_TEMP_DIRECTORY);
         self.make_final_path(base_dir, istio_ver, api_group, api_ver, kind, "yaml")
     }
@@ -262,7 +261,7 @@ impl Generator {
         api_group: &OsStr,
         api_ver: &OsStr,
         kind: &OsStr,
-    ) -> r#type::Result<path::PathBuf> {
+    ) -> utility::Result<path::PathBuf> {
         let base_dir = path::Path::new(constant::ISTIO_CRD_RUST_CODE_OUTPUT_DIRECTORY);
 
         let snake_kind = utility::camel_to_snake(kind.to_str().unwrap());
@@ -279,7 +278,7 @@ impl Generator {
         api_ver: &OsStr,
         kind: &OsStr,
         extension: &str,
-    ) -> r#type::Result<path::PathBuf> {
+    ) -> utility::Result<path::PathBuf> {
         let file_dir_path = path::Path::new(base_dir)
             .join(istio_ver)
             .join(api_group)
@@ -302,7 +301,7 @@ impl Generator {
         api_group: &OsStr,
         api_ver: &OsStr,
         kind: &OsStr,
-    ) -> r#type::Result<()> {
+    ) -> utility::Result<()> {
         info!(
             "calling kopium with istio_ver: {}, api_group: {}, api_ver: {}, kind: {}",
             istio_ver.to_str().unwrap(),
@@ -334,7 +333,7 @@ impl Generator {
         Ok(())
     }
 
-    fn make_mod_rs(&self, curr_dir: &path::Path, mut mod_names: Vec<String>) -> r#type::Result<()> {
+    fn make_mod_rs(&self, curr_dir: &path::Path, mut mod_names: Vec<String>) -> utility::Result<()> {
         let mut content = String::new();
         mod_names.sort();
         for name in mod_names {
@@ -348,7 +347,7 @@ impl Generator {
         Ok(())
     }
 
-    fn make_lib_rs(&self, curr_dir: &path::Path, mut mod_names: Vec<String>) -> r#type::Result<()> {
+    fn make_lib_rs(&self, curr_dir: &path::Path, mut mod_names: Vec<String>) -> utility::Result<()> {
         let mut content = String::new();
         mod_names.sort();
         for name in mod_names {
